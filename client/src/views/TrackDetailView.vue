@@ -79,7 +79,7 @@ export default {
       };
     },
     coverUrl(file) {
-      return file ? storageUrl(`artists/${file}`) : "https://placehold.co/700x700?text=Track";
+      return file ? storageUrl(`track-covers/${file}`) : "https://placehold.co/700x700?text=Track";
     },
     audioUrl(path) {
       return path ? storageUrl(path) : "";
@@ -161,8 +161,8 @@ export default {
 <style scoped>
 .detail-cover {
   width: 100%;
-  height: 100%;
-  min-height: 320px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: cover;
 }
 </style>

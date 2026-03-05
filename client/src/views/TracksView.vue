@@ -16,17 +16,15 @@
     </form>
 
     <div class="row g-3">
-      <div class="col-md-6 col-xl-4" v-for="t in filteredTracks" :key="trackId(t)">
-        <div class="card h-100 shadow-sm">
+      <div class="col-sm-6 col-lg-4 col-xl-3" v-for="t in filteredTracks" :key="trackId(t)">
+        <div class="card h-100 shadow-sm track-card">
           <img class="card-img-top track-cover" :src="coverUrl(t.track_cover)" :alt="t.track_title" @error="onImgError" />
 
-          <div class="card-body d-flex flex-column">
-            <h3 class="h6 card-title mb-1">{{ t.track_title }}</h3>
-            <p class="small text-muted mb-1">Genre: {{ t.genre?.genre_name || '-' }}</p>
-            <p class="small text-muted mb-2">Artists: {{ artistNames(t) }}</p>
+          <div class="card-body d-flex flex-column track-meta">
+            <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
+            <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
 
             <div class="mt-auto">
-              <small class="text-muted d-block mb-2">Playback is available on the track detail page.</small>
               <RouterLink class="btn btn-sm btn-outline-secondary mt-2" :to="`/tracks/${trackId(t)}`">
                 Open details
               </RouterLink>
@@ -74,7 +72,7 @@ export default {
   },
   methods: {
     coverUrl(file) {
-      return file ? storageUrl(`artists/${file}`) : "https://placehold.co/600x340?text=Track";
+      return file ? storageUrl(`track-covers/${file}`) : "https://placehold.co/600x340?text=Track";
     },
     trackId(track) {
       return track?.id ?? track?.track_id;
@@ -108,8 +106,31 @@ export default {
 
 <style scoped>
 .track-cover {
-  width: 100%;
-  height: 180px;
+  width: 72%;
+  margin: 0.75rem auto 0;
+  border-radius: 0.5rem;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: cover;
+}
+
+.track-card {
+  background: #ffffff;
+  border: 1px solid #d9dee5;
+}
+
+.track-meta {
+  color: #1f2937;
+}
+
+.track-title {
+  font-size: 1.2rem;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.track-artist {
+  color: #4b5563;
+  font-weight: 600;
 }
 </style>
