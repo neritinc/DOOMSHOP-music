@@ -6,6 +6,7 @@ const routes = [
   { path: "/registration", name: "registration", component: () => import("@/views/RegistrationView.vue"), meta: { title: "Registration", breadcrumb: "Registration" } },
   { path: "/about", name: "about", component: () => import("@/views/AboutView.vue"), meta: { title: "About", breadcrumb: "About" } },
   { path: "/tracks", name: "tracks", component: () => import("@/views/TracksView.vue"), meta: { title: "Tracks", breadcrumb: "Tracks" } },
+  { path: "/tracks/:id", name: "track-detail", component: () => import("@/views/TrackDetailView.vue"), meta: { title: "Track Details", breadcrumb: "Track Details" } },
   { path: "/genres", name: "genres", component: () => import("@/views/GenresView.vue"), meta: { title: "Genres", breadcrumb: "Genres", roles: [1] } },
   { path: "/artists", name: "artists", component: () => import("@/views/ArtistsView.vue"), meta: { title: "Artists", breadcrumb: "Artists", roles: [1] } },
   { path: "/my-cart", name: "my-cart", component: () => import("@/views/MyCartView.vue"), meta: { title: "My Cart", breadcrumb: "My Cart", roles: [1, 2] } },

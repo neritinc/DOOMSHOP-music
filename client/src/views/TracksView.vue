@@ -16,18 +16,15 @@
     </form>
 
     <div class="row g-3">
-      <div class="col-md-6 col-xl-4" v-for="t in filteredTracks" :key="t.id">
+      <div class="col-md-6 col-xl-4" v-for="t in filteredTracks" :key="trackId(t)">
         <div class="card h-100 shadow-sm">
-          <img
-            class="card-img-top track-cover"
-            :src="coverUrl(t.track_cover)"
-            :alt="t.track_title"
-            @error="onImgError"
-          />
+          <img class="card-img-top track-cover" :src="coverUrl(t.track_cover)" :alt="t.track_title" @error="onImgError" />
+
           <div class="card-body d-flex flex-column">
             <h3 class="h6 card-title mb-1">{{ t.track_title }}</h3>
             <p class="small text-muted mb-1">Genre: {{ t.genre?.genre_name || '-' }}</p>
             <p class="small text-muted mb-2">Artists: {{ artistNames(t) }}</p>
+
             <div class="mt-auto">
               <audio
                 v-if="isAdmin"
@@ -35,17 +32,24 @@
                 controls
                 controlslist="nodownload noplaybackrate"
                 :src="audioUrl(t.track_path)"
+                @play="stopOtherAdminPlayers($event)"
                 @contextmenu.prevent
               ></audio>
 
               <div v-else-if="isCustomer" class="d-flex align-items-center gap-2">
                 <button class="btn btn-sm btn-primary" @click="togglePreview(t)">
-                  {{ isPlaying(t.id) ? "Pause Preview" : "Play Preview" }}
+                  {{ isPlaying(trackId(t)) ? 'Pause Preview' : 'Play Preview' }}
                 </button>
                 <span class="badge text-bg-secondary">
                   Preview: {{ previewWindow(t).start }}s - {{ previewWindow(t).end }}s
                 </span>
               </div>
+
+              <small v-else class="text-muted">Login needed for playback.</small>
+
+              <RouterLink class="btn btn-sm btn-outline-secondary mt-2" :to="`/tracks/${trackId(t)}`">
+                Open details
+              </RouterLink>
             </div>
           </div>
         </div>
@@ -61,8 +65,10 @@ import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { useSearchStore } from "@/stores/searchStore";
 import { storageUrl } from "@/utils/storageUrl";
 import { Howl } from "howler";
+import { RouterLink } from "vue-router";
 
 export default {
+  components: { RouterLink },
   data() {
     return {
       tracks: [],
@@ -107,7 +113,10 @@ export default {
     previewApiUrl(track) {
       const { start, end } = this.previewWindow(track);
       const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-      return `${apiBase}/tracks/${track.id}/preview?start=${start}&end=${end}`;
+      return `${apiBase}/tracks/${this.trackId(track)}/preview?start=${start}&end=${end}`;
+    },
+    trackId(track) {
+      return track?.id ?? track?.track_id;
     },
     artistNames(track) {
       return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
@@ -115,8 +124,16 @@ export default {
     onImgError(e) {
       e.target.src = "https://placehold.co/600x340?text=No+Cover";
     },
+    stopOtherAdminPlayers(event) {
+      const allPlayers = document.querySelectorAll("audio");
+      allPlayers.forEach((player) => {
+        if (player !== event.target) player.pause();
+      });
+      this.stopAllPreviews();
+    },
     ensureHowl(track) {
-      if (this.howls[track.id]) return this.howls[track.id];
+      const id = this.trackId(track);
+      if (this.howls[id]) return this.howls[id];
 
       const howl = new Howl({
         src: [this.previewApiUrl(track)],
@@ -128,11 +145,11 @@ export default {
           },
         },
         onend: () => {
-          if (this.activeTrackId === track.id) this.activeTrackId = null;
+          if (this.activeTrackId === id) this.activeTrackId = null;
         },
       });
 
-      this.howls[track.id] = howl;
+      this.howls[id] = howl;
       return howl;
     },
     stopAllPreviews() {
@@ -143,17 +160,21 @@ export default {
       return this.activeTrackId === trackId;
     },
     togglePreview(track) {
+      const id = this.trackId(track);
       const howl = this.ensureHowl(track);
 
-      if (this.activeTrackId === track.id && howl.playing()) {
+      if (this.activeTrackId === id && howl.playing()) {
         howl.stop();
         this.activeTrackId = null;
         return;
       }
 
       this.stopAllPreviews();
+      const allPlayers = document.querySelectorAll("audio");
+      allPlayers.forEach((player) => player.pause());
+
       howl.play();
-      this.activeTrackId = track.id;
+      this.activeTrackId = id;
     },
     async load() {
       const res = await service.list();
