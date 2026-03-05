@@ -5,14 +5,11 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class UserUpdateTest extends TestCase
 {
-
-
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_admin_cannot_change_their_own_role_via_api()
     {

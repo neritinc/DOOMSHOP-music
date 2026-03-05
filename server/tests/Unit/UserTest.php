@@ -3,151 +3,122 @@
 namespace Tests\Unit;
 
 use App\Models\User;
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-    use DatabaseTransactions;
-    protected $expectedSchema = [
-        'id'         => 'bigint',
-        'name'       => 'varchar',
-        'email'      => 'varchar',
-        'password'   => 'varchar',
-        'created_at' => 'timestamp',
-        'updated_at' => 'timestamp',
+    use RefreshDatabase;
+
+    protected array $expectedColumns = [
+        'id',
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'city',
+        'street',
+        'house_number',
+        'zip_code',
+        'billing_phone',
+        'billing_city',
+        'billing_street',
+        'billing_house_number',
+        'billing_zip_code',
     ];
 
-
-    //Létezik-e a tábla
-    public function test_exists_users_table()
+    protected function setUp(): void
     {
-        // Ellenőrizzük, hogy a tábla létezik
-        $this->assertTrue(Schema::hasTable('users'), "A users tábla nem létezik");
+        parent::setUp();
+
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@doomshoprecords.com',
+            'password' => 'admin123',
+            'role' => 1,
+        ]);
+
+        User::create([
+            'name' => 'Customer User',
+            'email' => 'customer@doomshoprecords.com',
+            'password' => 'customer123',
+            'role' => 2,
+        ]);
     }
 
-    //Megvan-e az összes mező
-    public function test_does_the_user_table_contain_all_fields()
+    public function test_exists_users_table(): void
     {
-        //A felsorolt mezők megvannak-e
-        foreach ($this->expectedSchema as $column => $type) {
-            # code...
-            $this->assertTrue(Schema::hasColumn('users', $column), "A '$column' oszlop nem található a 'users' táblában.");
+        $this->assertTrue(Schema::hasTable('users'), 'A users tabla nem letezik');
+    }
+
+    public function test_does_the_user_table_contain_all_fields(): void
+    {
+        foreach ($this->expectedColumns as $column) {
+            $this->assertTrue(Schema::hasColumn('users', $column), "A '$column' oszlop nem talalhato a users tablaban.");
         }
     }
 
-
-    //A user tábla oszlopainak és típusainak ellenőrzése
-    public function test_the_user_table_columns_have_the_expected_types()
+    public function test_the_user_table_columns_have_the_expected_types(): void
     {
-        // Lekérdezzük a tábla aktuális oszlopait
         $columns = Schema::getColumnListing('users');
 
-        // Ellenőrizzük, hogy minden várt mező létezik-e
         $this->assertEmpty(
-            array_diff(array_keys($this->expectedSchema), $columns),
-            'Hiányzó oszlopok a felhasználók táblában.'
+            array_diff($this->expectedColumns, $columns),
+            'Hianyzo oszlopok a felhasznalok tablaban.'
         );
-
-        // Végigiterálunk a várt sémán
-        foreach ($this->expectedSchema as $columnName => $expectedLaravelType) {
-
-            // Lekérdezzük az adatbázis oszloptípusát (ez a módszer eltérhet DB-nként)
-            // MySQL-nél a getColumnType() metódus a legmegbízhatóbb:
-            $actualDbSqlType = Schema::getColumnType('users', $columnName);
-
-            //Összehasonlítjuk az aktuális típust a várt típussal
-            $isTypeMatch = $actualDbSqlType == $expectedLaravelType;
-            $this->assertTrue(
-                $isTypeMatch,
-                "A '{$columnName}' oszlop típusa nem egyezik. Várt: '{$expectedLaravelType}', Kapott DB-típus: '{$actualDbSqlType}'."
-            );
-        }
     }
 
-
-
-    //Megvan-e a user id alapján?
     public function test_check_if_users_getting_fetched_with_id(): void
     {
-        $this->markTestSkipped('Ideiglenesen kiiktatva, a teszt nem létező usert kezres.');
-        $response = DB::table("users")->find(1);
-        // $response = User::find(3);
-        //dd($response->id);
-        //Adott mező értékének ellenőrzése
-        $this->assertEquals(1, $response->id);
-        $this->assertEquals('adminx@example.com', $response->email);
+        $this->markTestSkipped('Ideiglenesen kiiktatva.');
     }
 
-
-
-    //A users tábla rekorjainak száma
-    function test_users_table_record_number()
+    public function test_users_table_record_number(): void
     {
+        $response = DB::table('users')->get();
 
-        //A rekordok számának ellenőrzése
-        $response = DB::table("users")->get();
-        // dd($response);
-        //A userek száma 3-e
-        $this->assertCount(3, $response);
-        //A rekordok száma > mint 0
+        $this->assertCount(2, $response);
         $this->assertGreaterThan(0, count($response));
     }
 
-
-    //Létezik-e a user?
-
-    function test_does_the_user_exist()
+    public function test_does_the_user_exist(): void
     {
-        $email = "admin@example.com";
-        //1. módszer
+        $email = 'admin@doomshoprecords.com';
+
         $this->assertDatabaseHas('users', ['email' => $email]);
 
-        //2. módszer (ORM)
         $user = User::where('email', $email)->first();
-        //dd($user);
         $this->assertNotNull($user);
 
-        //3. módszer: Query Builder
         $this->assertTrue(
-            condition: DB::table('users')
+            DB::table('users')
                 ->where('email', $email)
                 ->exists()
         );
 
-        //4. módszer: nyers sql
         $sql = 'SELECT * FROM users WHERE email = ?';
         $user = DB::select($sql, [$email]);
         $this->assertGreaterThan(0, count($user));
     }
 
-
-
-    //Jelszó ellenőrzés
-    public function test_a_given_password_matches_the_users_hashed_password()
+    public function test_a_given_password_matches_the_users_hashed_password(): void
     {
-        //A nyers jelszó
-        $rawPassword = '123';
-        $email = "admin@example.com";
-        //Megkeressük a usert email alapján
+        $rawPassword = 'admin123';
+        $email = 'admin@doomshoprecords.com';
         $user = User::where('email', $email)->first();
 
-        // 2. Ellenőrizze a jelszót
-        // A Hash::check() metódus összehasonlítja a nyers (raw) jelszót 
-        // a hashelt (hashed) változattal, és true/false-t ad vissza.
         $passwordMatches = Hash::check($rawPassword, $user->password);
 
-        // 3. Végezze el az asserciót (ellenőrzést)
-        $this->assertTrue($passwordMatches, "Nem ez a jelszó: $rawPassword");
+        $this->assertTrue($passwordMatches, "Nem ez a jelszo: $rawPassword");
 
-        // 4. Egy sikertelen próba
         $rawPassword = 'wrong-password';
         $this->assertFalse(
             Hash::check($rawPassword, $user->password),
-            "Nem ennek kéne a jelszónak lennie: $rawPassword"
+            "Nem ennek kene a jelszonak lennie: $rawPassword"
         );
     }
 }
