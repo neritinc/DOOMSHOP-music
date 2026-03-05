@@ -26,27 +26,7 @@
             <p class="small text-muted mb-2">Artists: {{ artistNames(t) }}</p>
 
             <div class="mt-auto">
-              <audio
-                v-if="isAdmin"
-                class="w-100"
-                controls
-                controlslist="nodownload noplaybackrate"
-                :src="audioUrl(t.track_path)"
-                @play="stopOtherAdminPlayers($event)"
-                @contextmenu.prevent
-              ></audio>
-
-              <div v-else-if="isCustomer" class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-primary" @click="togglePreview(t)">
-                  {{ isPlaying(trackId(t)) ? 'Pause Preview' : 'Play Preview' }}
-                </button>
-                <span class="badge text-bg-secondary">
-                  Preview: {{ previewWindow(t).start }}s - {{ previewWindow(t).end }}s
-                </span>
-              </div>
-
-              <small v-else class="text-muted">Login needed for playback.</small>
-
+              <small class="text-muted d-block mb-2">Playback is available on the track detail page.</small>
               <RouterLink class="btn btn-sm btn-outline-secondary mt-2" :to="`/tracks/${trackId(t)}`">
                 Open details
               </RouterLink>
@@ -64,7 +44,6 @@ import { mapState } from "pinia";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { useSearchStore } from "@/stores/searchStore";
 import { storageUrl } from "@/utils/storageUrl";
-import { Howl } from "howler";
 import { RouterLink } from "vue-router";
 
 export default {
@@ -73,12 +52,10 @@ export default {
     return {
       tracks: [],
       form: { track_title: "", genre_name: "", artist_names: "", track_path: "" },
-      howls: {},
-      activeTrackId: null,
     };
   },
   computed: {
-    ...mapState(useUserLoginLogoutStore, ["isAdmin", "isCustomer", "token"]),
+    ...mapState(useUserLoginLogoutStore, ["isAdmin"]),
     ...mapState(useSearchStore, ["searchWord"]),
     filteredTracks() {
       const word = (this.searchWord || "").toLowerCase().trim();
@@ -96,24 +73,8 @@ export default {
     },
   },
   methods: {
-    previewWindow(track) {
-      const start = Number(track.preview_start_sec ?? 30);
-      const end = Number(track.preview_end_sec ?? 60);
-      return {
-        start: Number.isFinite(start) ? start : 30,
-        end: Number.isFinite(end) ? end : 60,
-      };
-    },
     coverUrl(file) {
       return file ? storageUrl(`artists/${file}`) : "https://placehold.co/600x340?text=Track";
-    },
-    audioUrl(path) {
-      return path ? storageUrl(path) : "";
-    },
-    previewApiUrl(track) {
-      const { start, end } = this.previewWindow(track);
-      const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-      return `${apiBase}/tracks/${this.trackId(track)}/preview?start=${start}&end=${end}`;
     },
     trackId(track) {
       return track?.id ?? track?.track_id;
@@ -123,58 +84,6 @@ export default {
     },
     onImgError(e) {
       e.target.src = "https://placehold.co/600x340?text=No+Cover";
-    },
-    stopOtherAdminPlayers(event) {
-      const allPlayers = document.querySelectorAll("audio");
-      allPlayers.forEach((player) => {
-        if (player !== event.target) player.pause();
-      });
-      this.stopAllPreviews();
-    },
-    ensureHowl(track) {
-      const id = this.trackId(track);
-      if (this.howls[id]) return this.howls[id];
-
-      const howl = new Howl({
-        src: [this.previewApiUrl(track)],
-        html5: true,
-        preload: true,
-        xhr: {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-        },
-        onend: () => {
-          if (this.activeTrackId === id) this.activeTrackId = null;
-        },
-      });
-
-      this.howls[id] = howl;
-      return howl;
-    },
-    stopAllPreviews() {
-      Object.values(this.howls).forEach((h) => h.stop());
-      this.activeTrackId = null;
-    },
-    isPlaying(trackId) {
-      return this.activeTrackId === trackId;
-    },
-    togglePreview(track) {
-      const id = this.trackId(track);
-      const howl = this.ensureHowl(track);
-
-      if (this.activeTrackId === id && howl.playing()) {
-        howl.stop();
-        this.activeTrackId = null;
-        return;
-      }
-
-      this.stopAllPreviews();
-      const allPlayers = document.querySelectorAll("audio");
-      allPlayers.forEach((player) => player.pause());
-
-      howl.play();
-      this.activeTrackId = id;
     },
     async load() {
       const res = await service.list();
@@ -193,10 +102,6 @@ export default {
   },
   async mounted() {
     await this.load();
-  },
-  beforeUnmount() {
-    this.stopAllPreviews();
-    Object.values(this.howls).forEach((h) => h.unload());
   },
 };
 </script>
