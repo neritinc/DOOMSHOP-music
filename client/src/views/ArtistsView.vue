@@ -37,10 +37,24 @@ export default {
   },
   methods: {
     coverUrl(file) {
-      return file ? storageUrl(`artists/${file}`) : "https://placehold.co/80x80?text=A";
+      if (!file) return "https://placehold.co/80x80?text=A";
+      const normalized = String(file).replace(/\\/g, "/").trim();
+      if (/^https?:\/\//i.test(normalized)) return normalized;
+      const relative = normalized.startsWith("artists/") ? normalized : `artists/${normalized}`;
+      return storageUrl(relative);
     },
     onImgError(e) {
-      e.target.src = "https://placehold.co/80x80?text=A";
+      const img = e.target;
+      const current = img.getAttribute("src") || "";
+      const alreadyRetried = img.dataset.retriedExt === "1";
+
+      if (!alreadyRetried && /\.png($|\?)/i.test(current)) {
+        img.dataset.retriedExt = "1";
+        img.src = current.replace(/\.png($|\?)/i, ".jpg$1");
+        return;
+      }
+
+      img.src = "https://placehold.co/80x80?text=A";
     },
     async load() {
       const res = await service.list();
