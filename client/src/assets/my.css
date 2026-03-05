@@ -1,0 +1,12 @@
+:root {
+  --bg-soft: #f3f4f6;
+}
+
+body {
+  background: radial-gradient(circle at 20% 10%, #dbeafe 0%, #f3f4f6 45%, #e5e7eb 100%);
+}
+
+.hero-panel {
+  background: linear-gradient(135deg, #111827, #1d4ed8);
+  color: #fff;
+}
