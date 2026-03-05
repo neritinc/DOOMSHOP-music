@@ -1,0 +1,306 @@
+### =========================================================
+### DOOMSHOP API - Permission Matrix Test Collection
+### Roles: Admin (1), Customer (2)
+### =========================================================
+
+@protocol = http://
+@hostname = 127.0.0.1
+@port = 8000
+@host = {{protocol}}{{hostname}}:{{port}}
+
+### ---------------------------------------------------------
+### 0) Health
+### ---------------------------------------------------------
+GET {{host}}/api/x
+Accept: application/json
+
+### ---------------------------------------------------------
+### 1) Login - Admin
+### ---------------------------------------------------------
+# @name login_admin
+POST {{host}}/api/users/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "admin@doomshoprecords.com",
+  "password": "admin123"
+}
+
+@admin_token = {{login_admin.response.body.data.token}}
+@admin_id = {{login_admin.response.body.data.id}}
+
+### ---------------------------------------------------------
+### 2) Login - Customer
+### ---------------------------------------------------------
+# @name login_customer
+POST {{host}}/api/users/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "customer@doomshoprecords.com",
+  "password": "customer123"
+}
+
+@customer_token = {{login_customer.response.body.data.token}}
+@customer_id = {{login_customer.response.body.data.id}}
+
+### ---------------------------------------------------------
+### 3) MUSIC - Create track
+### Admin: YES | Customer: NO
+### ---------------------------------------------------------
+
+### 3.1 Admin creates track (expected: 201)
+# @name create_track_admin
+POST {{host}}/api/tracks
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "track_title": "Night Drive",
+  "genre_name": "Synthwave",
+  "bpm_value": 122,
+  "release_date": "2026-03-05",
+  "track_length_sec": 215,
+  "track_cover": "covers/night-drive.jpg",
+  "track_path": "tracks/night-drive.mp3",
+  "artist_names": ["DOOMSHOP Artist"]
+}
+
+@track_id = {{create_track_admin.response.body.data.id}}
+
+### 3.2 Customer tries to create track (expected: 403)
+POST {{host}}/api/tracks
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "track_title": "Customer Forbidden Track",
+  "genre_name": "Trap"
+}
+
+### ---------------------------------------------------------
+### 4) MUSIC - Read tracks
+### Admin: YES | Customer: YES
+### ---------------------------------------------------------
+
+### 4.1 Admin reads all tracks (expected: 200)
+GET {{host}}/api/tracks
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### 4.2 Customer reads all tracks (expected: 200)
+GET {{host}}/api/tracks
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### ---------------------------------------------------------
+### 5) GENRES / ARTISTS - Manage
+### Admin: YES | Customer: NO
+### ---------------------------------------------------------
+
+### 5.1 Admin creates genre (expected: 201)
+# @name create_genre_admin
+POST {{host}}/api/genres
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "genre_name": "Phonk"
+}
+
+@genre_id = {{create_genre_admin.response.body.data.genre_id}}
+
+### 5.2 Customer tries to create genre (expected: 403)
+POST {{host}}/api/genres
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "genre_name": "Forbidden Genre"
+}
+
+### 5.3 Admin creates artist (expected: 201)
+# @name create_artist_admin
+POST {{host}}/api/artists
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "artist_name": "Doomshop Crew",
+  "artist_picture": "artists/doomshop-crew.jpg"
+}
+
+@artist_id = {{create_artist_admin.response.body.data.artist_id}}
+
+### 5.4 Customer tries to create artist (expected: 403)
+POST {{host}}/api/artists
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "artist_name": "Forbidden Artist"
+}
+
+### ---------------------------------------------------------
+### 6) PROFILE - Own profile edit
+### Admin: YES | Customer: YES
+### ---------------------------------------------------------
+
+### 6.1 Admin updates own profile (expected: 200)
+PATCH {{host}}/api/usersme
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "city": "Los Angeles",
+  "street": "Sunset Blvd"
+}
+
+### 6.2 Customer updates own profile (expected: 200)
+PATCH {{host}}/api/usersme
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "city": "New York",
+  "street": "Broadway"
+}
+
+### ---------------------------------------------------------
+### 7) PROFILE - Edit other users
+### Admin: YES | Customer: NO
+### ---------------------------------------------------------
+
+### 7.1 Admin edits customer (expected: 200)
+PATCH {{host}}/api/users/{{customer_id}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "role": 2,
+  "city": "Chicago"
+}
+
+### 7.2 Customer tries to edit admin (expected: 403)
+PATCH {{host}}/api/users/{{admin_id}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "city": "Blocked City"
+}
+
+### ---------------------------------------------------------
+### 8) CARTS - Own cart management / all carts visibility
+### Matrix target: own cart BOTH, all carts ADMIN only
+### ---------------------------------------------------------
+
+### 8.1 Admin creates cart for customer (expected: 201)
+# @name create_cart_admin
+POST {{host}}/api/carts
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "user_id": {{customer_id}},
+  "date": "2026-03-05"
+}
+
+@cart_id = {{create_cart_admin.response.body.data.id}}
+
+### 8.2 Admin adds cart item (expected: 201)
+POST {{host}}/api/cart-items
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "cart_id": {{cart_id}},
+  "track_id": {{track_id}},
+  "pcs": 2
+}
+
+### 8.3 Admin lists all carts (expected: 200)
+GET {{host}}/api/carts
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### 8.4 Customer tries to list all carts (expected: 403)
+GET {{host}}/api/carts
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### 8.5 Customer creates own cart (expected: 201)
+# @name create_cart_customer
+POST {{host}}/api/my-carts
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "date": "2026-03-05"
+}
+
+@my_cart_id = {{create_cart_customer.response.body.data.id}}
+
+### 8.6 Customer lists own carts (expected: 200)
+GET {{host}}/api/my-carts
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### 8.7 Customer adds own cart item (expected: 201)
+# @name create_my_item
+POST {{host}}/api/my-cart-items
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "cart_id": {{my_cart_id}},
+  "track_id": {{track_id}},
+  "pcs": 1
+}
+
+@my_item_id = {{create_my_item.response.body.data.id}}
+
+### 8.8 Customer updates own cart item (expected: 200)
+PATCH {{host}}/api/my-cart-items/{{my_item_id}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "pcs": 3
+}
+
+### 8.9 Customer deletes own cart item (expected: 200)
+DELETE {{host}}/api/my-cart-items/{{my_item_id}}
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### ---------------------------------------------------------
+### 9) Logout
+### ---------------------------------------------------------
+
+### 9.1 Logout admin
+POST {{host}}/api/users/logout
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### 9.2 Logout customer
+POST {{host}}/api/users/logout
+Accept: application/json
+Authorization: Bearer {{customer_token}}
