@@ -10,6 +10,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-lg-5">
       <div class="card shadow-sm h-100">
         <div class="card-body">
@@ -22,9 +23,69 @@
         </div>
       </div>
     </div>
+
+    <div class="col-12">
+      <section class="recommendation-item" aria-label="Recommendations">
+        <div class="recommendation-copy">
+          <p class="recommendation-kicker">Curated Picks</p>
+          <p class="recommendation-text mb-0">Want to expand your music library? Check out our top recommendations!</p>
+        </div>
+        <RouterLink class="btn recommendation-btn" to="/recommendations">Open Recommendations</RouterLink>
+      </section>
+    </div>
   </div>
 </template>
 
 <script>
 export default {};
 </script>
+
+<style scoped>
+.recommendation-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  border: 1px solid #d8e5f7;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f8ff 100%);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+}
+
+.recommendation-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.recommendation-text {
+  color: #0f172a;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.recommendation-btn {
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  background: #2563eb;
+  color: #fff;
+  border: 1px solid #1d4ed8;
+  font-weight: 700;
+}
+
+.recommendation-btn:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+@media (max-width: 767px) {
+  .recommendation-item {
+    align-items: flex-start;
+  }
+}
+</style>

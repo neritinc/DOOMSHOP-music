@@ -66,7 +66,19 @@ class TrackController extends Controller
 
         $artistIds = $data['artist_ids'] ?? [];
         foreach (($data['artist_names'] ?? []) as $artistName) {
-            $artist = Artist::query()->firstOrCreate(['artist_name' => $artistName]);
+            $normalizedArtistName = trim((string) $artistName);
+            if ($normalizedArtistName === '') {
+                continue;
+            }
+
+            $artist = Artist::query()
+                ->whereRaw('LOWER(artist_name) = ?', [mb_strtolower($normalizedArtistName)])
+                ->first();
+
+            if (! $artist) {
+                $artist = Artist::query()->create(['artist_name' => $normalizedArtistName]);
+            }
+
             $artistIds[] = $artist->artist_id;
         }
         $artistIds = array_values(array_unique($artistIds));
