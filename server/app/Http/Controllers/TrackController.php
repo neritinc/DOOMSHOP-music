@@ -12,15 +12,20 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TrackController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $isAdmin = $this->isAdmin($request);
+        $tracks = Track::with(['genre', 'artists'])->get()->map(
+            fn (Track $track) => $this->transformTrackForViewer($track, $isAdmin)
+        );
+
         return response()->json([
             'message' => 'ok',
-            'data' => Track::with(['genre', 'artists'])->get(),
+            'data' => $tracks,
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         $track = Track::with(['genre', 'artists'])->find($id);
 
@@ -33,7 +38,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'ok',
-            'data' => $track,
+            'data' => $this->transformTrackForViewer($track, $this->isAdmin($request)),
         ]);
     }
 
@@ -83,55 +88,53 @@ class TrackController extends Controller
             return response()->json(['message' => 'Track not found', 'data' => null], 404);
         }
 
-        $relativePath = ltrim((string) $track->track_path, '/');
+        $relativePath = ltrim((string) $track->preview_path, '/');
+        if ($relativePath === '') {
+            return response()->json(['message' => 'Preview file not available', 'data' => null], 404);
+        }
+
         $fullPath = storage_path('app/public/' . $relativePath);
 
         if (! is_file($fullPath)) {
-            return response()->json(['message' => 'Audio file not found', 'data' => null], 404);
-        }
-
-        $durationSec = (int) $track->track_length_sec;
-        if ($durationSec <= 0) {
-            return response()->json([
-                'message' => 'Track duration is required for preview slicing',
-                'data' => null,
-            ], 422);
-        }
-
-        $startSec = (int) $request->query('start', 30);
-        $endSec = (int) $request->query('end', 60);
-
-        $startSec = max(0, min($startSec, $durationSec - 1));
-        $endSec = max($startSec + 1, min($endSec, $durationSec));
-
-        $maxPreviewLength = 45;
-        if (($endSec - $startSec) > $maxPreviewLength) {
-            $endSec = $startSec + $maxPreviewLength;
+            return response()->json(['message' => 'Preview file not found', 'data' => null], 404);
         }
 
         $fileSize = filesize($fullPath);
         if (! $fileSize || $fileSize <= 0) {
-            return response()->json(['message' => 'Invalid audio file size', 'data' => null], 500);
+            return response()->json(['message' => 'Invalid preview file size', 'data' => null], 500);
         }
 
-        $startByte = (int) floor(($startSec / $durationSec) * $fileSize);
-        $endByte = (int) floor(($endSec / $durationSec) * $fileSize) - 1;
+        $start = 0;
+        $end = $fileSize - 1;
+        $status = 200;
 
-        $startByte = max(0, min($startByte, $fileSize - 1));
-        $endByte = max($startByte, min($endByte, $fileSize - 1));
-        $length = $endByte - $startByte + 1;
+        $rangeHeader = $request->header('Range');
+        if (is_string($rangeHeader) && preg_match('/bytes=(\d*)-(\d*)/i', $rangeHeader, $matches)) {
+            $status = 206;
+            if ($matches[1] !== '') {
+                $start = (int) $matches[1];
+            }
+            if ($matches[2] !== '') {
+                $end = (int) $matches[2];
+            }
+            $start = max(0, min($start, $fileSize - 1));
+            $end = max($start, min($end, $fileSize - 1));
+        }
 
-        return response()->stream(function () use ($fullPath, $startByte, $length): void {
+        $length = ($end - $start) + 1;
+
+        return response()->stream(function () use ($fullPath, $start, $length): void {
             $handle = fopen($fullPath, 'rb');
             if (! $handle) {
                 return;
             }
 
-            fseek($handle, $startByte);
+            fseek($handle, $start);
             $remaining = $length;
+
             while (! feof($handle) && $remaining > 0) {
-                $chunkSize = min(8192, $remaining);
-                $buffer = fread($handle, $chunkSize);
+                $chunk = min(8192, $remaining);
+                $buffer = fread($handle, $chunk);
                 if ($buffer === false) {
                     break;
                 }
@@ -141,11 +144,39 @@ class TrackController extends Controller
             }
 
             fclose($handle);
-        }, 206, [
+        }, $status, [
             'Content-Type' => 'audio/mpeg',
             'Content-Length' => (string) $length,
             'Accept-Ranges' => 'bytes',
+            'Content-Range' => "bytes {$start}-{$end}/{$fileSize}",
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
+    }
+
+    private function isAdmin(Request $request): bool
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        return (bool) ($user?->isAdmin() ?? false);
+    }
+
+    private function transformTrackForViewer(Track $track, bool $isAdmin): array
+    {
+        $payload = $track->toArray();
+        $payload['track_title'] = html_entity_decode((string) ($payload['track_title'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        if (isset($payload['artists']) && is_array($payload['artists'])) {
+            $payload['artists'] = array_map(function (array $artist): array {
+                $artist['artist_name'] = html_entity_decode((string) ($artist['artist_name'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                return $artist;
+            }, $payload['artists']);
+        }
+
+        if (! $isAdmin) {
+            $payload['track_path'] = null;
+        }
+
+        return $payload;
     }
 }

@@ -5,42 +5,54 @@
     <div v-if="loading" class="alert alert-info">Loading track...</div>
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <div v-else-if="track" class="card shadow-sm">
-      <div class="row g-0">
-        <div class="col-md-4">
-          <img class="detail-cover" :src="coverUrl(track.track_cover)" :alt="track.track_title" @error="onImgError" />
+    <div v-else-if="track" class="track-layout card shadow-sm">
+      <div class="layout-left">
+        <img class="detail-cover" :src="coverUrl(track.track_cover)" :alt="track.track_title" @error="onImgError" />
+
+        <div class="meta-box">
+          <div class="meta-row"><span class="meta-key">Artists</span><span class="meta-val">{{ artistNames(track) }}</span></div>
+          <div class="meta-row"><span class="meta-key">Genre</span><span class="meta-val">{{ track.genre?.genre_name || "-" }}</span></div>
+          <div class="meta-row"><span class="meta-key">BPM</span><span class="meta-val">{{ track.bpm_value || "-" }}</span></div>
+          <div class="meta-row"><span class="meta-key">Release</span><span class="meta-val">{{ track.release_date || "-" }}</span></div>
+          <div class="meta-row"><span class="meta-key">Length</span><span class="meta-val">{{ formatLength(track.track_length_sec) }}</span></div>
+        </div>
+      </div>
+
+      <div class="layout-right">
+        <p class="crumb-line">
+          Home / Tracks / {{ firstArtist(track) }} / {{ track.track_title }}
+        </p>
+
+        <div class="artist-stack">
+          <p v-for="a in track.artists || []" :key="a.artist_id" class="artist-top">{{ a.artist_name }}</p>
+        </div>
+        <div v-if="isCustomer" class="artist-chips">
+          <span v-for="a in track.artists || []" :key="`chip-${a.artist_id}`" class="chip">{{ a.artist_name }}</span>
         </div>
 
-        <div class="col-md-8">
-          <div class="card-body">
-            <h1 class="h4 mb-3">{{ track.track_title }}</h1>
+        <h1 class="detail-title">{{ track.track_title }}</h1>
 
-            <p class="mb-1"><strong>Artists:</strong> {{ artistNames(track) }}</p>
-            <p class="mb-1"><strong>Genre:</strong> {{ track.genre?.genre_name || "-" }}</p>
-            <p class="mb-1"><strong>BPM:</strong> {{ track.bpm_value || "-" }}</p>
-            <p class="mb-1"><strong>Release date:</strong> {{ track.release_date || "-" }}</p>
-            <p class="mb-3"><strong>Length (sec):</strong> {{ track.track_length_sec || "-" }}</p>
+        <div class="player-wrap">
+          <audio
+            v-if="isAdmin"
+            class="w-100"
+            controls
+            controlslist="nodownload noplaybackrate"
+            :src="audioUrl(track.track_path)"
+            @contextmenu.prevent
+          ></audio>
 
-            <audio
-              v-if="isAdmin"
-              class="w-100"
-              controls
-              controlslist="nodownload noplaybackrate"
-              :src="audioUrl(track.track_path)"
-              @contextmenu.prevent
-            ></audio>
+          <NeonWavePlayer v-else-if="isCustomer" :track="track" />
 
-            <div v-else-if="isCustomer" class="d-flex align-items-center gap-2">
-              <button class="btn btn-primary btn-sm" @click="togglePreview">
-                {{ isPlaying ? "Pause Preview" : "Play Preview" }}
-              </button>
-              <span class="badge text-bg-secondary">
-                Preview: {{ previewWindow(track).start }}s - {{ previewWindow(track).end }}s
-              </span>
-            </div>
+          <small v-else class="text-muted">Login needed for playback preview.</small>
+        </div>
 
-            <small v-else class="text-muted">Login needed for playback preview.</small>
+        <div class="after-player">
+          <div class="quality-row">
+            <strong>Quality</strong>
+            <button class="btn btn-dark btn-sm quality-btn" type="button">Choose an option</button>
           </div>
+          <button class="btn btn-secondary btn-sm mt-2" type="button" disabled>Add to cart</button>
         </div>
       </div>
     </div>
@@ -50,53 +62,52 @@
 <script>
 import { mapState } from "pinia";
 import { RouterLink } from "vue-router";
-import { Howl } from "howler";
 import service from "@/api/trackService";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { storageUrl } from "@/utils/storageUrl";
+import NeonWavePlayer from "@/components/AudioPlayer/NeonWavePlayer.vue";
 
 export default {
-  components: { RouterLink },
+  components: { RouterLink, NeonWavePlayer },
   data() {
     return {
       loading: true,
       error: "",
       track: null,
-      previewHowl: null,
-      isPlaying: false,
     };
   },
   computed: {
-    ...mapState(useUserLoginLogoutStore, ["isAdmin", "isCustomer", "token"]),
+    ...mapState(useUserLoginLogoutStore, ["isAdmin", "isCustomer"]),
   },
   methods: {
-    previewWindow(track) {
-      const start = Number(track.preview_start_sec ?? 30);
-      const end = Number(track.preview_end_sec ?? 60);
-      return {
-        start: Number.isFinite(start) ? start : 30,
-        end: Number.isFinite(end) ? end : 60,
-      };
-    },
     coverUrl(file) {
-      return file ? storageUrl(`track-covers/${file}`) : "https://placehold.co/700x700?text=Track";
+      if (!file) return "https://placehold.co/700x700?text=Track";
+      if (String(file).startsWith("http://") || String(file).startsWith("https://")) return String(file);
+      if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
+      return storageUrl(`track-covers/${file}`);
     },
     audioUrl(path) {
       return path ? storageUrl(path) : "";
     },
-    previewApiUrl(track) {
-      const { start, end } = this.previewWindow(track);
-      const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-      return `${apiBase}/tracks/${this.trackId(track)}/preview?start=${start}&end=${end}`;
-    },
     artistNames(track) {
       return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
+    },
+    firstArtist(track) {
+      return track?.artists?.[0]?.artist_name || "Artist";
     },
     trackId(track) {
       return track?.id ?? track?.track_id;
     },
     onImgError(e) {
       e.target.src = "https://placehold.co/700x700?text=No+Cover";
+    },
+    formatLength(value) {
+      const total = Number(value);
+      if (!Number.isFinite(total) || total <= 0) return "-";
+      const seconds = Math.floor(total);
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${min}:${String(sec).padStart(2, "0")}`;
     },
     async load() {
       this.loading = true;
@@ -111,58 +122,136 @@ export default {
         this.loading = false;
       }
     },
-    ensurePreviewHowl() {
-      if (!this.track) return null;
-      if (this.previewHowl) return this.previewHowl;
-
-      this.previewHowl = new Howl({
-        src: [this.previewApiUrl(this.track)],
-        html5: true,
-        preload: true,
-        xhr: {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-        },
-        onend: () => {
-          this.isPlaying = false;
-        },
-      });
-
-      return this.previewHowl;
-    },
-    togglePreview() {
-      const howl = this.ensurePreviewHowl();
-      if (!howl) return;
-
-      if (howl.playing()) {
-        howl.stop();
-        this.isPlaying = false;
-        return;
-      }
-
-      howl.play();
-      this.isPlaying = true;
-    },
   },
   async mounted() {
     await this.load();
-  },
-  beforeUnmount() {
-    if (this.previewHowl) {
-      this.previewHowl.stop();
-      this.previewHowl.unload();
-      this.previewHowl = null;
-    }
   },
 };
 </script>
 
 <style scoped>
+.track-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  gap: 2rem;
+  padding: 1rem 1rem 1.25rem;
+}
+
+.layout-left {
+  min-width: 0;
+}
+
 .detail-cover {
   width: 100%;
+  max-width: 420px;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
   aspect-ratio: 1 / 1;
   height: auto;
   object-fit: cover;
+}
+
+.meta-box {
+  margin-top: 0.75rem;
+  max-width: 420px;
+  border: 1px solid #dbe7fb;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+  padding: 0.6rem 0.75rem;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+  padding: 0.2rem 0;
+}
+
+.meta-key {
+  font-weight: 700;
+  color: #334155;
+}
+
+.layout-right {
+  min-width: 0;
+  padding: 0.6rem 0.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.crumb-line {
+  margin: 0 0 1.1rem;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.artist-stack {
+  margin-bottom: 0.7rem;
+}
+
+.artist-top {
+  margin: 0;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.artist-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.8rem;
+}
+
+.chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+}
+
+.detail-title {
+  margin: 0 0 1.15rem;
+  font-size: clamp(1.5rem, 3vw, 2.6rem);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  color: #0f172a;
+  font-weight: 800;
+  max-width: 18ch;
+}
+
+.player-wrap {
+  max-width: 560px;
+}
+
+.after-player {
+  margin-top: 1rem;
+}
+
+.quality-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.quality-btn {
+  min-width: 180px;
+}
+
+@media (max-width: 992px) {
+  .track-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-cover,
+  .meta-box,
+  .player-wrap {
+    max-width: 100%;
+  }
 }
 </style>

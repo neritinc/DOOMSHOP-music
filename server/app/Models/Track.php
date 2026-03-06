@@ -21,6 +21,9 @@ class Track extends Model
         'track_length_sec',
         'track_cover',
         'track_path',
+        'preview_start_at',
+        'preview_end_at',
+        'preview_path',
     ];
 
     public function genre(): BelongsTo

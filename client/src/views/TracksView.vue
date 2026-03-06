@@ -72,7 +72,10 @@ export default {
   },
   methods: {
     coverUrl(file) {
-      return file ? storageUrl(`track-covers/${file}`) : "https://placehold.co/600x340?text=Track";
+      if (!file) return "https://placehold.co/600x340?text=Track";
+      if (String(file).startsWith("http://") || String(file).startsWith("https://")) return String(file);
+      if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
+      return storageUrl(`track-covers/${file}`);
     },
     trackId(track) {
       return track?.id ?? track?.track_id;

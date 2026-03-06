@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Helpers\CsvReader;
+use App\Jobs\GenerateTrackPreview;
 use App\Models\Track;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +41,9 @@ class TrackSeeder extends Seeder
             $trackLength = (int) $this->value($row, 'track_length', 0);
             $trackCover = $this->value($row, 'track_cover');
             $trackPath = $this->value($row, 'track_path');
+            $previewStart = (int) $this->value($row, 'preview_start_at', 0);
+            $previewEnd = (int) $this->value($row, 'preview_end_at', 30);
+            $previewPath = $this->value($row, 'preview_path');
             $artistId = (int) $this->value($row, 'artist_id', 0);
 
             if ($id <= 0 || $genreId <= 0 || $title === '') {
@@ -56,8 +60,13 @@ class TrackSeeder extends Seeder
                     'track_length_sec' => $trackLength,
                     'track_cover' => $trackCover ?: null,
                     'track_path' => $trackPath ?: null,
+                    'preview_start_at' => $previewStart,
+                    'preview_end_at' => $previewEnd,
+                    'preview_path' => $previewPath ?: null,
                 ]
             );
+
+            GenerateTrackPreview::dispatch($track);
 
             if ($artistId > 0) {
                 DB::table('track_artists')->updateOrInsert([

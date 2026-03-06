@@ -20,6 +20,9 @@ return new class extends Migration
             $table->integer('track_length_sec')->nullable();
             $table->string('track_cover')->nullable();
             $table->string('track_path')->nullable();
+            $table->integer('preview_start_at')->default(0);
+            $table->integer('preview_end_at')->default(30);
+            $table->string('preview_path')->nullable();
         });
     }
 
