@@ -25,6 +25,6 @@ export default {
 
 <style scoped>
 .app-shell {
-  max-width: 1280px;
+  max-width: 1600px;
 }
 </style>

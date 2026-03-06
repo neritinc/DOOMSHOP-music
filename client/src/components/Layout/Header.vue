@@ -63,8 +63,8 @@
 }
 
 .header-logo {
-  width: 150px;
-  height: 150px;
+  width: 180px;
+  height: 180px;
   object-fit: contain;
   justify-self: center;
   filter: drop-shadow(0 10px 18px rgba(37, 99, 235, 0.2));

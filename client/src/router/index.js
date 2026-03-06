@@ -11,6 +11,7 @@ const routes = [
   { path: "/artists", name: "artists", component: () => import("../views/ArtistsView.vue"), meta: { title: "Artists", breadcrumb: "Artists", roles: [1, 2] } },
   { path: "/artists/:id/tracks", name: "artist-tracks", component: () => import("../views/ArtistTracksView.vue"), meta: { title: "Artist Tracks", breadcrumb: "Artist Tracks", roles: [1, 2] } },
   { path: "/recommendations", name: "recommendations", component: () => import("../views/MusicRecommendations.vue"), meta: { title: "Recommendations", breadcrumb: "Recommendations" } },
+  { path: "/liveshows-mixes", name: "liveshows-mixes", component: () => import("../views/LiveshowsMixesView.vue"), meta: { title: "LIVESHOWS and Mixes", breadcrumb: "LIVESHOWS and Mixes" } },
   { path: "/my-cart", name: "my-cart", component: () => import("../views/MyCartView.vue"), meta: { title: "My Cart", breadcrumb: "My Cart", roles: [1, 2] } },
   { path: "/admin-carts", name: "admin-carts", component: () => import("../views/AdminCartsView.vue"), meta: { title: "All Carts", breadcrumb: "All Carts", roles: [1] } },
   { path: "/:pathMatch(.*)*", name: "not-found", component: () => import("../views/404.vue"), meta: { title: "404", breadcrumb: "404" } },
