@@ -46,10 +46,14 @@ ffprobe -version
 If you want songs, previews, and covers to be uploaded to GitHub too, include storage files in commit:
 
 ```powershell
+cd server
+powershell -ExecutionPolicy Bypass -File .\export-music-data.ps1
+cd ..
 git add .
 git add server/storage/app/public/tracks
 git add server/storage/app/public/previews
 git add server/storage/app/public/track-covers
+git add server/database/backups
 git commit -m "Update tracks and media files"
 git push
 ```
