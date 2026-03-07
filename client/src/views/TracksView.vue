@@ -190,7 +190,14 @@
           >
             Drop audio here
           </div>
-          <input class="form-control" type="file" accept=".mp3,.wav,.ogg,.m4a,.flac,audio/*" @change="onAudioChange" required />
+          <input
+            ref="audioInputRef"
+            class="form-control"
+            type="file"
+            accept=".mp3,.wav,.ogg,.m4a,.flac,audio/*"
+            @change="onAudioChange"
+            required
+          />
           <small class="text-muted">Supported: mp3, wav, ogg, m4a, flac (max 50 MB)</small>
           <small v-if="analyzing" class="d-block text-primary mt-1">Analyzing audio metadata...</small>
         </div>
@@ -574,7 +581,18 @@ export default {
     onAudioDrop(event) {
       this.isDraggingAudio = false;
       const file = event.dataTransfer?.files?.[0] || null;
+      this.syncAudioInputFile(file);
       this.handleAudioSelected(file);
+    },
+    syncAudioInputFile(file) {
+      const input = this.$refs.audioInputRef;
+      if (!input || !file) return;
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      } catch (_err) {
+      }
     },
     handleAudioSelected(file) {
       this.stopPreviewSegment();

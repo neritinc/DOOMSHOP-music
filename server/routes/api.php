@@ -4,6 +4,8 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\GenreController;
+use App\Http\Controllers\LiveshowLinkController;
+use App\Http\Controllers\RecommendationLinkController;
 use App\Http\Controllers\TrackController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -36,6 +38,22 @@ Route::patch('usersmeupdatepassword', [UserController::class, 'updatePassword'])
 
 Route::delete('usersme', [UserController::class, 'destroySelf'])
     ->middleware(['auth:sanctum', 'ability:usersme:delete']);
+//endregion
+
+//region Liveshows and Mixes
+Route::get('liveshow-links', [LiveshowLinkController::class, 'index']);
+Route::post('liveshow-links', [LiveshowLinkController::class, 'store'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('liveshow-links/{id}', [LiveshowLinkController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+//endregion
+
+//region Recommendations
+Route::get('recommendation-links', [RecommendationLinkController::class, 'index']);
+Route::post('recommendation-links', [RecommendationLinkController::class, 'store'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('recommendation-links/{id}', [RecommendationLinkController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 
 //region admin endpoint

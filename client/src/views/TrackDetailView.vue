@@ -539,8 +539,13 @@ export default {
 .track-layout {
   display: grid;
   grid-template-columns: minmax(280px, 420px) 1fr;
-  gap: 2rem;
-  padding: 1rem 1rem 1.25rem;
+  gap: 3rem;
+  padding: 1.1rem 1.1rem 1.35rem;
+  border: 1px solid #d9e5f7;
+  border-radius: 16px;
+  background:
+    radial-gradient(900px 320px at 0% -20%, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
 .layout-left { min-width: 0; }
@@ -548,47 +553,53 @@ export default {
 .detail-cover {
   width: 100%;
   max-width: 420px;
-  border-radius: 0.5rem;
-  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  border: 1px solid #c7d7ef;
+  box-shadow: 0 14px 24px rgba(22, 42, 78, 0.1);
   aspect-ratio: 1 / 1;
   height: auto;
   object-fit: cover;
 }
 
 .meta-box {
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
   max-width: 420px;
-  border: 1px solid #dbe7fb;
-  border-radius: 0.5rem;
-  background: #f8fbff;
-  padding: 0.6rem 0.75rem;
+  border: 1px solid #d6e5fc;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f8ff 100%);
+  padding: 0.75rem 0.85rem;
 }
 
 .meta-row {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 76px 1fr;
   gap: 0.5rem;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   color: #0f172a;
-  padding: 0.2rem 0;
+  padding: 0.25rem 0;
 }
 
 .meta-key { font-weight: 700; color: #334155; }
 
 .layout-right {
   min-width: 0;
-  padding: 0.6rem 0.25rem;
+  padding: 0.7rem 0.6rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
 }
 
-.crumb-line { margin: 0 0 1.1rem; color: #334155; font-size: 0.95rem; }
-.artist-stack { margin-bottom: 0.7rem; }
+.crumb-line {
+  margin: 0 0 1.05rem;
+  color: #4b5563;
+  font-size: 0.92rem;
+}
+
+.artist-stack { margin-bottom: 0.75rem; }
 .artist-top { margin: 0; color: #2563eb; font-weight: 600; }
-.artist-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.8rem; }
+.artist-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.9rem; }
 .chip {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: #1e3a8a;
   background: #dbeafe;
@@ -598,25 +609,60 @@ export default {
 }
 
 .detail-title {
-  margin: 0 0 1.15rem;
+  margin: 0 0 1.05rem;
   font-size: clamp(1.5rem, 3vw, 2.6rem);
-  line-height: 1.04;
+  line-height: 1.03;
   letter-spacing: 0.01em;
   color: #0f172a;
   font-weight: 800;
-  max-width: 18ch;
+  max-width: 20ch;
 }
 
-.player-wrap { max-width: 560px; }
-.after-player { margin-top: 1rem; }
-.quality-row { display: flex; align-items: center; gap: 0.8rem; }
+.player-wrap {
+  max-width: 620px;
+  border: 1px solid #dbe8fb;
+  border-radius: 14px;
+  background: #fbfdff;
+  padding: 0.8rem 0.85rem;
+}
+
+.after-player { margin-top: 0.9rem; }
+.quality-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 .quality-btn { min-width: 180px; }
+
+.card.card-body {
+  border: 1px solid #d7e4f7;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 8px 22px rgba(16, 42, 85, 0.08);
+}
+
+.form-control {
+  border-color: #c9d8ee;
+  border-radius: 10px;
+  min-height: 42px;
+}
+
+.form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.16rem rgba(59, 130, 246, 0.2);
+}
+
+.btn {
+  border-radius: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  border-color: #1d4ed8;
+  font-weight: 600;
+}
 
 .cover-dropzone {
   min-height: 120px;
   border: 2px dashed #93c5fd;
-  border-radius: 0.6rem;
-  background: #eff6ff;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #eff6ff 0%, #edf3fc 100%);
   color: #1e3a8a;
   display: flex;
   align-items: center;
@@ -627,10 +673,24 @@ export default {
 }
 
 .cover-dropzone.is-over { border-color: #2563eb; background: #dbeafe; }
-.cover-preview { max-width: 100%; max-height: 160px; object-fit: cover; border-radius: 0.5rem; }
+.cover-preview {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+}
 
 @media (max-width: 992px) {
-  .track-layout { grid-template-columns: 1fr; }
-  .detail-cover, .meta-box, .player-wrap { max-width: 100%; }
+  .track-layout {
+    grid-template-columns: 1fr;
+    padding: 0.9rem;
+    gap: 1.5rem;
+  }
+  .detail-cover, .meta-box, .player-wrap {
+    max-width: 100%;
+  }
+  .detail-title {
+    max-width: 100%;
+  }
 }
 </style>
