@@ -25,13 +25,13 @@ if ($conn -ne "mysql") {
     throw "This script currently supports DB_CONNECTION=mysql only."
 }
 
-$host = $envMap["DB_HOST"]
+$dbHost = $envMap["DB_HOST"]
 $port = $envMap["DB_PORT"]
 $db = $envMap["DB_DATABASE"]
 $user = $envMap["DB_USERNAME"]
 $pass = $envMap["DB_PASSWORD"]
 
-if (-not $host -or -not $db -or -not $user) {
+if (-not $dbHost -or -not $db -or -not $user) {
     throw "Missing DB settings in server/.env (DB_HOST, DB_DATABASE, DB_USERNAME)."
 }
 
@@ -44,10 +44,12 @@ $backupDir = Join-Path $root "database/backups"
 New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
 
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$outFile = Join-Path $backupDir "music_data_$stamp.sql"
+$bundleDir = Join-Path $backupDir "music_bundle_$stamp"
+New-Item -ItemType Directory -Path $bundleDir -Force | Out-Null
+$outFile = Join-Path $bundleDir "music_data_$stamp.sql"
 
 $tables = @("genres", "artists", "tracks", "track_artists", "track_genres")
-$args = @("-h", $host, "-P", $port, "-u", $user, "--single-transaction", "--quick", "--skip-lock-tables", $db) + $tables
+$args = @("-h", $dbHost, "-P", $port, "-u", $user, "--single-transaction", "--quick", "--skip-lock-tables", $db) + $tables
 
 if ($pass) {
     $env:MYSQL_PWD = $pass
@@ -61,3 +63,15 @@ finally {
     Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
 }
 
+$storageSource = Join-Path $root "storage/app/public"
+$storageTarget = Join-Path $bundleDir "storage_public"
+
+if (Test-Path $storageSource) {
+    Copy-Item -Path $storageSource -Destination $storageTarget -Recurse -Force
+    Write-Host "Storage files copied: $storageTarget"
+}
+else {
+    Write-Warning "Storage source not found: $storageSource"
+}
+
+Write-Host "Bundle ready: $bundleDir"

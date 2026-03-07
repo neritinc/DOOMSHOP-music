@@ -61,3 +61,26 @@ git push
 Note:
 - `server/public/storage` is a symlink and is not required in git.
 - If files become very large, use Git LFS for media files.
+
+
+Repo klónozás után másold át ezt a backup mappát az új gépre:
+server/database/backups/storage_only_20260307_150307 (benne a storage/app/public tartalom)
+Állítsd be a szerver oldalt:
+cd server
+cp .env.example .env (vagy másold a régi .env-ed)
+.env-ben DB adatok kitöltése
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan storage:link
+Adatbázis adatok visszatöltése:
+importáld a DB dumpot (doomshop_full.sql) DBForge/phpMyAdmin-ban
+ha még nincs dumpod, mostani gépen exportáld és azt vidd át
+Médiafájlok visszamásolása:
+backupból másold az új gépen ide:
+server/storage/app/public/ (tracks, previews, track-covers, stb.)
+Frontend:
+cd ../client
+npm install
+npm run dev
+Ha ez megvan, ugyanazokat az adatokat fogod látni (trackek, előadók, preview-k, képek).
