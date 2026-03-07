@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Validator;
 
-class StoreTrackRequest extends FormRequest
+class UpdateTrackRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -28,10 +28,10 @@ class StoreTrackRequest extends FormRequest
             'track_length_sec' => 'nullable|integer|min:1',
             'track_cover' => 'nullable|string|max:255',
             'track_cover_file' => 'nullable|image|max:5120',
-            'track_path' => 'nullable|string|max:255|required_without:track_audio',
-            'track_audio' => 'nullable|file|required_without:track_path|max:51200',
-            'preview_start_at' => 'nullable|integer|min:0',
-            'preview_end_at' => 'nullable|integer|gt:preview_start_at',
+            'track_path' => 'nullable|string|max:255',
+            'track_audio' => 'nullable|file|max:51200',
+            'preview_start_at' => 'required|integer|min:0',
+            'preview_end_at' => 'required|integer|gt:preview_start_at',
             'artist_ids' => 'nullable|array',
             'artist_ids.*' => 'integer|exists:artists,artist_id',
             'artist_names' => 'nullable|array',

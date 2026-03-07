@@ -1,1 +1,59 @@
 # DOOMSHOP-music
+
+## Quick Setup (Windows)
+
+Run one command from the project root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+What it does:
+- installs server/client dependencies
+- creates `server/.env` (if missing)
+- generates Laravel app key
+- runs migrations
+- creates storage symlink
+- auto-detects `ffmpeg` / `ffprobe` and writes them into `server/.env` when found
+
+## Moving To Another PC (Full Project Works)
+
+To have everything work on another machine, copy/push all of these:
+- source code
+- database data
+- uploaded media files from `server/storage/app/public/`
+  - `tracks/`
+  - `previews/`
+  - `track-covers/`
+
+Then on the new machine run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+cd server
+php artisan optimize:clear
+```
+
+Also verify:
+
+```powershell
+ffmpeg -version
+ffprobe -version
+```
+
+## GitHub Commit With Songs/Uploads Included
+
+If you want songs, previews, and covers to be uploaded to GitHub too, include storage files in commit:
+
+```powershell
+git add .
+git add server/storage/app/public/tracks
+git add server/storage/app/public/previews
+git add server/storage/app/public/track-covers
+git commit -m "Update tracks and media files"
+git push
+```
+
+Note:
+- `server/public/storage` is a symlink and is not required in git.
+- If files become very large, use Git LFS for media files.

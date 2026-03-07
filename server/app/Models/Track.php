@@ -31,6 +31,18 @@ class Track extends Model
         return $this->belongsTo(Genre::class, 'genre_id', 'genre_id');
     }
 
+    public function genres(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Genre::class,
+            'track_genres',
+            'track_id',
+            'genre_id',
+            'id',
+            'genre_id'
+        );
+    }
+
     public function artists(): BelongsToMany
     {
         return $this->belongsToMany(

@@ -57,7 +57,15 @@ const loadError = ref(false);
 const apiBase = computed(() => import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api");
 
 const trackId = computed(() => props.track?.id ?? props.track?.track_id ?? null);
-const audioSrc = computed(() => (trackId.value ? `${apiBase.value}/tracks/${trackId.value}/preview` : ""));
+const previewCacheKey = computed(() => {
+  const pathPart = props.track?.preview_path || "";
+  const start = props.track?.preview_start_at ?? "";
+  const end = props.track?.preview_end_at ?? "";
+  return encodeURIComponent(`${pathPart}|${start}|${end}`);
+});
+const audioSrc = computed(() =>
+  trackId.value ? `${apiBase.value}/tracks/${trackId.value}/preview?v=${previewCacheKey.value}` : "",
+);
 const remainingTime = computed(() => Math.max(0, duration.value - currentTime.value));
 
 function onLoadedMetadata() {

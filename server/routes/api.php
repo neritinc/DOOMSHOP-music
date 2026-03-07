@@ -55,8 +55,15 @@ Route::delete('users/{id}', [UserController::class, 'destroy'])
 //region Tracks
 Route::get('tracks', [TrackController::class, 'index']);
 Route::get('tracks/{id}/preview', [TrackController::class, 'preview']);
+Route::get('tracks/{id}/source', [TrackController::class, 'source']);
 Route::get('tracks/{id}', [TrackController::class, 'show']);
+Route::post('tracks/analyze-upload', [TrackController::class, 'analyzeUpload'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks', [TrackController::class, 'store'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::post('tracks/{id}/regenerate-preview', [TrackController::class, 'regeneratePreview'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::patch('tracks/{id}', [TrackController::class, 'update'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 

@@ -23,10 +23,17 @@
             <li v-if="isLoggedIn" class="nav-item"><RouterLink class="nav-link" to="/my-cart">My Cart</RouterLink></li>
             <li v-if="isAdmin" class="nav-item"><RouterLink class="nav-link" to="/admin-carts">All Carts</RouterLink></li>
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/login" v-if="!isLoggedIn">Login</RouterLink>
-              <div v-if="isLoggedIn" class="d-flex align-items-center gap-2 px-2">
+              <RouterLink v-if="!isLoggedIn" class="nav-link" to="/login">Login</RouterLink>
+              <div v-else class="d-flex align-items-center gap-2 px-2">
                 <span class="small fw-semibold text-primary">{{ userNameWithRole }}</span>
-                <i class="bi bi-box-arrow-right my-pointer tight-icon" @click="onClickLogout"></i>
+                <button
+                  type="button"
+                  class="logout-btn"
+                  aria-label="Logout"
+                  @click="onClickLogout"
+                >
+                  <i class="bi bi-box-arrow-right tight-icon" aria-hidden="true"></i>
+                </button>
               </div>
             </li>
           </ul>
@@ -38,7 +45,6 @@
               placeholder="Search tracks"
               aria-label="Search"
               v-model="searchWordInput"
-              @input="setSearchWord(searchWordInput)"
             />
             <label for="search" class="form-label m-0">
               <i class="bi bi-search fs-5 my-pointer nav-search-icon"></i>
@@ -50,39 +56,35 @@
   </div>
 </template>
 
-<script>
-import { mapActions, mapState } from "pinia";
+<script setup>
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useSearchStore } from "@/stores/searchStore";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 
-export default {
-  data() {
-    return {
-      searchWordInput: "",
-    };
+const router = useRouter();
+
+const searchStore = useSearchStore();
+const userLoginLogoutStore = useUserLoginLogoutStore();
+
+const { searchWord } = storeToRefs(searchStore);
+const { isLoggedIn, userNameWithRole, isAdmin } = storeToRefs(userLoginLogoutStore);
+
+const searchWordInput = computed({
+  get: () => searchWord.value,
+  set: (value) => {
+    if (value) {
+      searchStore.setSearchWord(value);
+      return;
+    }
+    searchStore.resetSearchWord();
   },
-  watch: {
-    searchWordInput(value) {
-      if (!value) {
-        this.resetSearchWord();
-      }
-    },
-    searchWord(value) {
-      this.searchWordInput = value;
-    },
-  },
-  computed: {
-    ...mapState(useSearchStore, ["searchWord"]),
-    ...mapState(useUserLoginLogoutStore, ["isLoggedIn", "userNameWithRole", "isAdmin"]),
-  },
-  methods: {
-    ...mapActions(useSearchStore, ["resetSearchWord", "setSearchWord"]),
-    ...mapActions(useUserLoginLogoutStore, ["logout"]),
-    async onClickLogout() {
-      await this.logout();
-      this.$router.push("/");
-    },
-  },
+});
+
+const onClickLogout = async () => {
+  await userLoginLogoutStore.logout();
+  router.push("/");
 };
 </script>
 
@@ -129,6 +131,16 @@ export default {
 .nav-search-icon { color: #2563eb; }
 .nav-toggler { border: 1px solid #c9daef; }
 .tight-icon { line-height: 1 !important; display: inline-flex; vertical-align: middle; font-size: 1.2rem; }
+
+.logout-btn {
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  padding: 0;
+  line-height: 1;
+}
+
+.logout-btn:hover { color: #1e40af; }
 
 @media (max-width: 767px) {
   .nav-search-input { min-width: 100%; }
