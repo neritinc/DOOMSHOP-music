@@ -1,2 +1,10 @@
 *
 !.gitignore
+!tracks/
+!tracks/**
+!previews/
+!previews/**
+!track-covers/
+!track-covers/**
+!artists/
+!artists/**
