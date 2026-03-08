@@ -1,4 +1,4 @@
-﻿"id";"genre_id";"track_title";"bpm_value";"artist_id";"release_date";"track_length";"track_cover";"track_path"
+"id";"genre_id";"track_title";"bpm_value";"artist_id";"release_date";"track_length";"track_cover";"track_path"
 "1";"2";"[SubCarbon Records] Subtronics - Bubble Flex";"140";"1";"2026.03.05";"210";"bubbleflex.jpg";"tracks/[SubCarbon Records] Subtronics - Bubble Flex.mp3"
 "2";"1";"1. Krowdexx & Mish - FEELIN' HIGH (Extended Mix)";"160";"2";"2026.03.05";"240";"feelinhigh.jpg";"tracks/1. Krowdexx & Mish - FEELIN' HIGH (Extended Mix).mp3"
 "3";"1";"1. Krowdexx & TOZA - HARDSTYLE IS BACK (Original Mix)";"160";"2";"2026.03.05";"210";"hardstyleisback.jpg";"tracks/1. Krowdexx & TOZA - HARDSTYLE IS BACK (Original Mix).mp3"
@@ -31,3 +31,5 @@
 "30";"2";"Subtronics feat. CREG - Antidote (Midnight Coffee) ";"140";"1";"2026.03.05";"210";"subtronicsantidote.jpg";"tracks/Subtronics feat. CREG - Antidote (Midnight Coffee) .mp3"
 "31";"2";"Subtronics feat. Jem Cooke - By A Thread ";"140";"1";"2026.03.05";"210";"subtronicsbyathread.jpg";"tracks/Subtronics feat. Jem Cooke - By A Thread .mp3"
 "32";"2";"Zeds Dead, Subtronics feat. Flowdan - Gassed Up ";"140";"1";"2026.03.05";"210";"subtronicsgassedup.jpg";"tracks/Zeds Dead, Subtronics feat. Flowdan - Gassed Up .mp3"
+"33";"7";"HAAi remix";"117";"11";"1970.01.01";"230";"track-covers/1y1v2coQkF9VAbUxutTEfLbHTkMQevyWFu0oXjVh.jpg";"tracks/EcsAXjUcdrQdOpVhQMHCwXWdJWGoaC7xSyWf2dpC.mp3"
+"34";"7";"Hamdi remix";"124";"0";"1970.01.01";"196";"track-covers/ljMSXFDZvgjQaKeysLXbAJfxERpMmjTYhx97H7R2.jpg";"tracks/YkN0VLRy8rNdvxwdpkwkCmhV1IPvVsEkIbRgJzQj.mp3"

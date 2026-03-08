@@ -48,8 +48,18 @@ $bundleDir = Join-Path $backupDir "music_bundle_$stamp"
 New-Item -ItemType Directory -Path $bundleDir -Force | Out-Null
 $outFile = Join-Path $bundleDir "music_data_$stamp.sql"
 
-$tables = @("genres", "artists", "tracks", "track_artists", "track_genres")
-$args = @("-h", $dbHost, "-P", $port, "-u", $user, "--single-transaction", "--quick", "--skip-lock-tables", $db) + $tables
+$args = @(
+    "-h", $dbHost,
+    "-P", $port,
+    "-u", $user,
+    "--single-transaction",
+    "--quick",
+    "--skip-lock-tables",
+    "--routines",
+    "--triggers",
+    "--events",
+    $db
+)
 
 if ($pass) {
     $env:MYSQL_PWD = $pass
@@ -57,7 +67,7 @@ if ($pass) {
 
 try {
     & mysqldump @args | Out-File -FilePath $outFile -Encoding utf8
-    Write-Host "Music data export created: $outFile"
+    Write-Host "Full database export created: $outFile"
 }
 finally {
     Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
