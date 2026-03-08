@@ -49,11 +49,12 @@
 
           <div v-if="isAssigning(album)" class="mt-3">
             <label class="form-label mb-1">Select tracks for this album</label>
-            <select v-model="assignTrackIds" class="form-select" multiple size="8">
-              <option v-for="track in tracks" :key="track.id || track.track_id" :value="String(track.id || track.track_id)">
-                {{ track.track_title }}
-              </option>
-            </select>
+            <div class="assign-list">
+              <label v-for="track in tracks" :key="track.id || track.track_id" class="assign-item">
+                <input v-model="assignTrackIds" type="checkbox" :value="String(track.id || track.track_id)" />
+                <span>{{ track.track_title }}</span>
+              </label>
+            </div>
             <div class="d-flex gap-2 mt-2">
               <button type="button" class="btn btn-primary btn-sm" @click="saveAssign(album)">Save</button>
               <button type="button" class="btn btn-outline-danger btn-sm" @click="cancelAssign">Cancel</button>
@@ -181,5 +182,21 @@ export default {
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid #d7e2f0;
+}
+
+.assign-list {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #d7e2f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+.assign-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.1rem;
 }
 </style>
