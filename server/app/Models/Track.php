@@ -19,6 +19,7 @@ class Track extends Model
         'bpm_value',
         'release_date',
         'track_length_sec',
+        'track_price_eur',
         'track_cover',
         'track_path',
         'preview_start_at',

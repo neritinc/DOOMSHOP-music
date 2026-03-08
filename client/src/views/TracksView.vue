@@ -65,6 +65,9 @@
         <div class="col-md-2">
           <input v-model.number="form.bpm_value" class="form-control" type="number" min="1" max="999" placeholder="BPM" />
         </div>
+        <div class="col-md-2">
+          <input v-model.number="form.track_price_eur" class="form-control" type="number" min="0" step="0.01" placeholder="Price (€)" />
+        </div>
       </div>
 
       <div class="row g-2 mt-1">
@@ -263,6 +266,7 @@
           <div class="card-body d-flex flex-column track-meta">
             <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
             <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
+            <p class="mb-2 track-artist">Price: {{ formatPrice(t.track_price_eur) }}</p>
 
             <div class="mt-auto">
               <RouterLink class="btn btn-sm btn-outline-secondary mt-2" :to="`/tracks/${trackId(t)}`">
@@ -291,6 +295,7 @@ const initialForm = () => ({
   genre_names: [""],
   artist_names: [""],
   bpm_value: null,
+  track_price_eur: 1.99,
   release_date: "",
   track_length_sec: null,
   preview_start_at: 0,
@@ -573,6 +578,11 @@ export default {
       const min = Math.floor(total / 60);
       const sec = total % 60;
       return `${min}:${String(sec).padStart(2, "0")}`;
+    },
+    formatPrice(value) {
+      const amount = Number(value);
+      const safeAmount = Number.isFinite(amount) ? amount : 1.99;
+      return `€${safeAmount.toFixed(2)}`;
     },
     onAudioChange(event) {
       const file = event.target.files?.[0] || null;
@@ -885,6 +895,7 @@ export default {
         artistNames.forEach((name, index) => payload.append(`artist_names[${index}]`, name));
 
         if (this.form.bpm_value) payload.append("bpm_value", String(this.form.bpm_value));
+        payload.append("track_price_eur", String(Number(this.form.track_price_eur ?? 1.99).toFixed(2)));
         if (this.form.release_date) payload.append("release_date", this.form.release_date);
         if (this.form.track_length_sec) payload.append("track_length_sec", String(this.form.track_length_sec));
         if (this.coverFile) payload.append("track_cover_file", this.coverFile);

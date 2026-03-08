@@ -26,6 +26,7 @@ class StoreTrackRequest extends FormRequest
             'bpm_value' => 'nullable|integer|min:1|max:999',
             'release_date' => 'nullable|date',
             'track_length_sec' => 'nullable|integer|min:1',
+            'track_price_eur' => 'nullable|numeric|min:0|max:9999.99',
             'track_cover' => 'nullable|string|max:255',
             'track_cover_file' => 'nullable|image|max:5120',
             'track_path' => 'nullable|string|max:255|required_without:track_audio',

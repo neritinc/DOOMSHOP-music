@@ -15,6 +15,7 @@
           <div class="meta-row"><span class="meta-key">BPM</span><span class="meta-val">{{ track.bpm_value || "-" }}</span></div>
           <div class="meta-row"><span class="meta-key">Release</span><span class="meta-val">{{ track.release_date || "-" }}</span></div>
           <div class="meta-row"><span class="meta-key">Length</span><span class="meta-val">{{ formatLength(track.track_length_sec) }}</span></div>
+          <div class="meta-row"><span class="meta-key">Price</span><span class="meta-val">{{ formatPrice(track.track_price_eur) }}</span></div>
         </div>
       </div>
 
@@ -90,6 +91,7 @@
               </datalist>
             </div>
             <div class="col-md-3"><input v-model.number="edit.bpm_value" class="form-control" type="number" min="1" max="999" placeholder="BPM" /></div>
+            <div class="col-md-3"><input v-model.number="edit.track_price_eur" class="form-control" type="number" min="0" step="0.01" placeholder="Price (€)" /></div>
           </div>
 
           <div class="row g-2 mt-1">
@@ -164,6 +166,7 @@ const emptyEdit = () => ({
   track_title: "",
   genre_name: "",
   bpm_value: null,
+  track_price_eur: 1.99,
   release_date: "",
   track_length_sec: null,
   preview_start_at: 0,
@@ -261,12 +264,18 @@ export default {
       const sec = total % 60;
       return `${min}:${String(sec).padStart(2, "0")}`;
     },
+    formatPrice(value) {
+      const amount = Number(value);
+      const safeAmount = Number.isFinite(amount) ? amount : 1.99;
+      return `€${safeAmount.toFixed(2)}`;
+    },
     initEditFromTrack() {
       const t = this.track || {};
       this.edit = {
         track_title: t.track_title || "",
         genre_name: t.genre?.genre_name || "",
         bpm_value: t.bpm_value || null,
+        track_price_eur: Number(t.track_price_eur ?? 1.99),
         release_date: t.release_date || "",
         track_length_sec: t.track_length_sec || null,
         preview_start_at: Number(t.preview_start_at ?? 0),
@@ -502,6 +511,7 @@ export default {
         payload.append("preview_start_at", String(this.edit.preview_start_at));
         payload.append("preview_end_at", String(this.edit.preview_end_at));
         if (this.edit.bpm_value) payload.append("bpm_value", String(this.edit.bpm_value));
+        payload.append("track_price_eur", String(Number(this.edit.track_price_eur ?? 1.99).toFixed(2)));
         if (this.edit.release_date) payload.append("release_date", this.edit.release_date);
         if (this.edit.track_length_sec) payload.append("track_length_sec", String(this.edit.track_length_sec));
 

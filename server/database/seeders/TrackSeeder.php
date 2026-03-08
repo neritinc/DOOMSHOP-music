@@ -54,6 +54,7 @@ class TrackSeeder extends Seeder
                     'bpm_value' => $bpm,
                     'release_date' => $releaseDate,
                     'track_length_sec' => $trackLength,
+                    'track_price_eur' => 1.99,
                     'track_cover' => $trackCover ?: null,
                     'track_path' => $trackPath ?: null,
                 ]
