@@ -403,7 +403,17 @@ class TrackController extends Controller
             return response()->json(['message' => 'Track source file not found', 'data' => null], 404);
         }
 
-        return $this->streamAudioFile($request, $sourcePath);
+        $extension = strtolower((string) pathinfo((string) ($track->track_path ?? ''), PATHINFO_EXTENSION));
+        if ($extension === '') {
+            $extension = strtolower((string) pathinfo($sourcePath, PATHINFO_EXTENSION));
+        }
+        if ($extension === '') {
+            $extension = 'mp3';
+        }
+
+        $downloadName = $this->safeDownloadName((string) ($track->track_title ?? 'track'), $extension);
+
+        return $this->streamAudioFile($request, $sourcePath, $downloadName);
     }
 
     public function regeneratePreview(Request $request, int $id): JsonResponse
@@ -461,7 +471,7 @@ class TrackController extends Controller
         ]);
     }
 
-    private function streamAudioFile(Request $request, string $fullPath): JsonResponse|StreamedResponse
+    private function streamAudioFile(Request $request, string $fullPath, ?string $downloadName = null): JsonResponse|StreamedResponse
     {
         $fileSize = filesize($fullPath);
         if (! $fileSize || $fileSize <= 0) {
@@ -487,6 +497,18 @@ class TrackController extends Controller
 
         $length = ($end - $start) + 1;
 
+        $headers = [
+            'Content-Type' => 'audio/mpeg',
+            'Content-Length' => (string) $length,
+            'Accept-Ranges' => 'bytes',
+            'Content-Range' => "bytes {$start}-{$end}/{$fileSize}",
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ];
+
+        if (is_string($downloadName) && $downloadName !== '') {
+            $headers['Content-Disposition'] = 'attachment; filename="' . str_replace('"', '', $downloadName) . '"';
+        }
+
         return response()->stream(function () use ($fullPath, $start, $length): void {
             $handle = fopen($fullPath, 'rb');
             if (! $handle) {
@@ -508,13 +530,30 @@ class TrackController extends Controller
             }
 
             fclose($handle);
-        }, $status, [
-            'Content-Type' => 'audio/mpeg',
-            'Content-Length' => (string) $length,
-            'Accept-Ranges' => 'bytes',
-            'Content-Range' => "bytes {$start}-{$end}/{$fileSize}",
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-        ]);
+        }, $status, $headers);
+    }
+
+    private function safeDownloadName(string $title, string $extension): string
+    {
+        $base = trim($title);
+        if ($base === '') {
+            $base = 'track';
+        }
+
+        $base = preg_replace('/[\\\\\\/\\:\\*\\?\\"\\<\\>\\|]+/', ' ', $base) ?? $base;
+        $base = preg_replace('/\\s+/', ' ', $base) ?? $base;
+        $base = trim($base, " .\t\n\r\0\x0B");
+        if ($base === '') {
+            $base = 'track';
+        }
+
+        $ext = strtolower(trim($extension));
+        $ext = preg_replace('/[^a-z0-9]+/', '', $ext) ?? '';
+        if ($ext === '') {
+            $ext = 'mp3';
+        }
+
+        return $base . '.' . $ext;
     }
 
     private function resolveTrackSourcePath(string $trackPath): ?string

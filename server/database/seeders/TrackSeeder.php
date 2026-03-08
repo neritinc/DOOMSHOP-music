@@ -3,12 +3,38 @@
 namespace Database\Seeders;
 
 use App\Helpers\CsvReader;
+use App\Jobs\GenerateTrackPreview;
 use App\Models\Track;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class TrackSeeder extends Seeder
 {
+    private function loadPreviewMap(): array
+    {
+        $rows = CsvReader::csvToArray('csv/track_previews.csv', ';');
+        $map = [];
+
+        foreach ($rows as $row) {
+            $id = (int) $this->value($row, 'id', 0);
+            $previewPath = trim((string) $this->value($row, 'preview_path', ''));
+            $previewStartAt = (int) $this->value($row, 'preview_start_at', 0);
+            $previewEndAt = (int) $this->value($row, 'preview_end_at', 30);
+
+            if ($id <= 0 || $previewPath === '') {
+                continue;
+            }
+
+            $map[$id] = [
+                'preview_path' => $previewPath,
+                'preview_start_at' => max(0, $previewStartAt),
+                'preview_end_at' => max(1, $previewEndAt),
+            ];
+        }
+
+        return $map;
+    }
+
     private function value(array $row, string $key, mixed $default = null): mixed
     {
         if (array_key_exists($key, $row)) {
@@ -29,6 +55,7 @@ class TrackSeeder extends Seeder
     public function run(): void
     {
         $rows = CsvReader::csvToArray('csv/tracks.csv', ';');
+        $previewMap = $this->loadPreviewMap();
 
         foreach ($rows as $row) {
             $id = (int) $this->value($row, 'id', 0);
@@ -60,11 +87,32 @@ class TrackSeeder extends Seeder
                 ]
             );
 
+            $customPreview = $previewMap[$id] ?? null;
+            $usedCustomPreview = false;
+            if (is_array($customPreview)) {
+                $candidate = storage_path('app/public/' . ltrim((string) $customPreview['preview_path'], '/'));
+                if (is_file($candidate)) {
+                    $track->preview_path = (string) $customPreview['preview_path'];
+                    $track->preview_start_at = (int) $customPreview['preview_start_at'];
+                    $track->preview_end_at = (int) $customPreview['preview_end_at'];
+                    $track->save();
+                    $usedCustomPreview = true;
+                }
+            }
+
             if ($artistId > 0) {
                 DB::table('track_artists')->updateOrInsert([
                     'track_id' => (int) $track->id,
                     'artist_id' => $artistId,
                 ]);
+            }
+
+            if (! $usedCustomPreview && ! empty($track->track_path)) {
+                try {
+                    (new GenerateTrackPreview($track))->handle();
+                } catch (\Throwable) {
+                    // Preview generation is optional during seeding (e.g. missing ffmpeg).
+                }
             }
         }
     }
