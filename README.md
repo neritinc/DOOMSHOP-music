@@ -115,3 +115,10 @@ git push
 Notes:
 - `server/public/storage` is a symlink and is not required in git.
 - If files become very large, use Git LFS for media files.
+
+
+
+
+TELEFONOS MEGNYITÁS 
+
+npm run dev -- --host

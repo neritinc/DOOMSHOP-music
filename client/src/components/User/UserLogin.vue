@@ -40,7 +40,6 @@
 
 <script>
 import PasswordField from "./PasswordField.vue";
-import ToastContainer from "@/components/Message/ToastContanier.vue";
 class User {
   constructor(email = "", password = "") {
     this.email = email;
@@ -51,7 +50,6 @@ export default {
   name: "UserLogin",
   components: {
     PasswordField,
-    ToastContainer,
   },
   data() {
     return {
@@ -68,9 +66,7 @@ export default {
       this.validated = true;
 
       if (form.checkValidity() === false) {
-        console.log("Hiba:");
       } else {
-        console.log("Sikeres validáció!");
         this.$emit("logIn", this.user);
       }
     },

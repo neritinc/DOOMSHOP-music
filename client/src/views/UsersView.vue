@@ -56,7 +56,6 @@ import { useSearchStore } from "@/stores/searchStore";
 import { useToastStore } from "@/stores/toastStore";
 import GenericTable from "@/components/Table/GenericTable.vue";
 import ConfirmModal from "@/components/Confirm/ConfirmModal.vue";
-import ButtonsCrudCreate from "@/components/Table/ButtonsCrudCreate.vue";
 import FormUser from "@/components/Forms/FormUser.vue";
 export default {
   //módosít
@@ -64,7 +63,6 @@ export default {
   components: {
     GenericTable,
     ConfirmModal,
-    ButtonsCrudCreate,
     FormUser,
   },
   watch: {
@@ -118,7 +116,6 @@ export default {
       this.title = "Adatmódosítás";
       this.getById(id);
       this.$refs.form.show();
-      console.log("update:", id);
     },
     createHandler() {
       useToastStore().messages.push("Innen nem hozható létre user");
@@ -128,18 +125,14 @@ export default {
       // this.title = "Új adatbevitel";
       // this.clearItem();
       // this.$refs.form.show();
-      // console.log("Create:");
     },
     passwordChangeHandler(id){
-      console.log("passwordChangeHandler", id);
       
     },
     sortHandler(column) {
-      console.log(column);
       this.getAllSortSearch(column);
     },
     cancelHandler() {
-      console.log("mégsem törlök");
       this.isOpenConfirmModal = false;
       this.state = "r";
     },

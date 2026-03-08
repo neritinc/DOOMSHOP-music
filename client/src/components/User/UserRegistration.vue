@@ -126,9 +126,7 @@ export default {
       this.validated = true;
 
       if (form.checkValidity() === false) {
-        console.log("Hiba:");
       } else {
-        console.log("Sikeres validáció!");
         //user létrehozás
         const data = {
           name: this.userName,
@@ -142,7 +140,6 @@ export default {
             if (success) {
               this.$router.push('/login');
             }else{
-              console.log("Server oldali hiba, űrlap marad");
             }
           }
         } 

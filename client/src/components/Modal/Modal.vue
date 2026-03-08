@@ -97,7 +97,6 @@ export default {
       // Van-e űrlap kitöltési hiba
       if (form.checkValidity() === false) {
         //hiba van az űrlapon
-        console.log("Kliens oldali hiba az űrlapon");
       } else {
         //Nincs hiba az űrlapon
         // Átadunk egy függvényt (callback), amit a szülő hív meg, ha végzett
@@ -106,7 +105,6 @@ export default {
             this.hide();
           } else {
             // Ha success === false, nem hívunk hide()-ot, a modal nyitva marad a hibákkal
-            console.log("Szerveroldali hiba, a modal marad");
           }
         });
       }

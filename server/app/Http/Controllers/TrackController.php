@@ -150,8 +150,7 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
-        $releaseDate = trim((string) ($data['release_date'] ?? ''));
-        $releaseDate = $releaseDate !== '' ? $releaseDate : null;
+        $releaseDate = $this->normalizeNullableDate($data['release_date'] ?? null);
 
         $track = Track::query()->create([
             'genre_id' => $genreId,
@@ -252,8 +251,7 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
-        $releaseDate = trim((string) ($data['release_date'] ?? ''));
-        $releaseDate = $releaseDate !== '' ? $releaseDate : null;
+        $releaseDate = $this->normalizeNullableDate($data['release_date'] ?? null);
 
         $track->fill([
             'genre_id' => $genreId,
@@ -1009,6 +1007,12 @@ class TrackController extends Controller
         }
 
         return 'image/jpeg';
+    }
+
+    private function normalizeNullableDate(mixed $value): ?string
+    {
+        $normalized = trim((string) $value);
+        return $normalized !== '' ? $normalized : null;
     }
 
     private function canExecuteBinary(string $binary): bool
