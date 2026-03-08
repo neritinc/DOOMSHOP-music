@@ -43,7 +43,7 @@
               class="form-range"
               type="range"
               min="0"
-              :max="adminDuration"
+              :max="adminSeekMax"
               step="0.1"
               :value="adminCurrentTime"
               @input="onAdminSeekInput"
@@ -51,7 +51,7 @@
             />
             <div class="small text-muted d-flex justify-content-between">
               <span>{{ formatTime(adminCurrentTime) }}</span>
-              <span>{{ formatTime(adminDuration) }}</span>
+              <span>{{ formatTime(adminSeekMax) }}</span>
             </div>
             <audio
               ref="adminTrackAudioRef"
@@ -219,6 +219,13 @@ export default {
       if (!input) return null;
       return this.genres.find((g) => String(g.genre_name || "").trim().toLowerCase() === input) || null;
     },
+    adminSeekMax() {
+      const loaded = Number(this.adminDuration || 0);
+      if (Number.isFinite(loaded) && loaded > 0) return loaded;
+
+      const fallback = Number(this.track?.track_length_sec || 0);
+      return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+    },
   },
   methods: {
     coverUrl(file) {
@@ -300,6 +307,8 @@ export default {
       this.coverPreviewUrl = "";
       this.audioFile = null;
       this.coverFile = null;
+      const fallback = Number(t.track_length_sec || 0);
+      this.adminDuration = Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
       this.resetAdminPlayer();
     },
     resetAdminPlayer() {
@@ -310,7 +319,6 @@ export default {
       }
       this.adminIsPlaying = false;
       this.adminCurrentTime = 0;
-      this.adminDuration = 0;
     },
     toggleAdminTrackPlay() {
       const audio = this.$refs.adminTrackAudioRef;
@@ -343,7 +351,7 @@ export default {
       const next = Number(event?.target?.value || 0);
       const audio = this.$refs.adminTrackAudioRef;
       if (!audio) return;
-      const max = Number(this.adminDuration || 0);
+      const max = Number(this.adminSeekMax || 0);
       const clamped = Math.max(0, Math.min(max, next));
       audio.currentTime = clamped;
       this.adminCurrentTime = clamped;
