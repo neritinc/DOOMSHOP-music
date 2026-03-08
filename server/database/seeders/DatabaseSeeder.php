@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
         DB::table('cart_items')->truncate();
         DB::table('carts')->truncate();
         DB::table('track_artists')->truncate();
+        DB::table('liveshow_links')->truncate();
+        DB::table('recommendation_links')->truncate();
         DB::table('tracks')->truncate();
         DB::table('artists')->truncate();
         DB::table('genres')->truncate();
@@ -30,6 +32,8 @@ class DatabaseSeeder extends Seeder
             GenreSeeder::class,
             ArtistSeeder::class,
             TrackSeeder::class,
+            LiveshowLinkSeeder::class,
+            RecommendationLinkSeeder::class,
         ]);
     }
 }
