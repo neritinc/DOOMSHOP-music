@@ -15,11 +15,23 @@ class ArtistController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $normalizedArtistName = trim((string) $request->input('artist_name', ''));
         $validated = $request->validate([
-            'artist_name' => 'required|string|max:255|unique:artists,artist_name',
+            'artist_name' => 'required|string|max:255',
             'artist_picture' => 'nullable|string|max:255',
         ]);
 
+        $exists = Artist::query()
+            ->whereRaw('LOWER(artist_name) = ?', [mb_strtolower($normalizedArtistName)])
+            ->exists();
+        if ($exists) {
+            return response()->json([
+                'message' => 'Artist already exists',
+                'data' => null,
+            ], 422);
+        }
+
+        $validated['artist_name'] = $normalizedArtistName;
         $artist = Artist::create($validated);
         return response()->json(['message' => 'Artist created', 'data' => $artist], 201);
     }
@@ -40,11 +52,24 @@ class ArtistController extends Controller
             return response()->json(['message' => 'Artist not found', 'data' => null], 404);
         }
 
+        $normalizedArtistName = trim((string) $request->input('artist_name', ''));
         $validated = $request->validate([
-            'artist_name' => "required|string|max:255|unique:artists,artist_name,{$id},artist_id",
+            'artist_name' => 'required|string|max:255',
             'artist_picture' => 'nullable|string|max:255',
         ]);
 
+        $exists = Artist::query()
+            ->whereRaw('LOWER(artist_name) = ?', [mb_strtolower($normalizedArtistName)])
+            ->where('artist_id', '!=', $id)
+            ->exists();
+        if ($exists) {
+            return response()->json([
+                'message' => 'Artist already exists',
+                'data' => null,
+            ], 422);
+        }
+
+        $validated['artist_name'] = $normalizedArtistName;
         $artist->update($validated);
         return response()->json(['message' => 'Artist updated', 'data' => $artist]);
     }

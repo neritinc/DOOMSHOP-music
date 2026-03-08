@@ -2,10 +2,15 @@
   <section class="player-card">
     <audio ref="audioEl" :src="audioSrc" preload="metadata" @loadedmetadata="onLoadedMetadata" @timeupdate="onTimeUpdate" @ended="onEnded" @error="onError" />
 
+    <div class="player-head">
+      <p class="kicker">Preview Player</p>
+      <p class="track-title">{{ props.track?.track_title || "Selected Track" }}</p>
+    </div>
+
     <div class="row-main">
       <button class="btn-play" type="button" @click="togglePlay" :disabled="!audioSrc" aria-label="Play/Pause">
-        <span v-if="!isPlaying" class="icon">▶</span>
-        <span v-else class="icon">❚❚</span>
+        <i v-if="!isPlaying" class="bi bi-play-fill icon"></i>
+        <i v-else class="bi bi-pause-fill icon"></i>
       </button>
 
       <div class="bar-wrap">
@@ -19,6 +24,7 @@
           @input="onSeek"
           :disabled="!audioSrc || duration <= 0"
           aria-label="Seek preview"
+          :style="{ '--progress': `${progressPercent}%` }"
         />
 
         <div class="times">
@@ -28,12 +34,17 @@
       </div>
 
       <button class="btn-mute" type="button" @click="toggleMute" :disabled="!audioSrc" aria-label="Mute/Unmute">
-        <span v-if="isMuted" class="icon-mute">🔇</span>
-        <span v-else class="icon-mute">🔊</span>
+        <i v-if="isMuted" class="bi bi-volume-mute-fill icon-mute"></i>
+        <i v-else class="bi bi-volume-up-fill icon-mute"></i>
       </button>
     </div>
 
-    <p v-if="loadError" class="error-text">A preview file nem tölthető be.</p>
+    <div class="status-line">
+      <span>{{ isPlaying ? "Playing preview" : "Ready to play" }}</span>
+      <span>{{ formatTime(duration) }} total</span>
+    </div>
+
+    <p v-if="loadError" class="error-text">A preview file nem toltheto be.</p>
   </section>
 </template>
 
@@ -67,6 +78,10 @@ const audioSrc = computed(() =>
   trackId.value ? `${apiBase.value}/tracks/${trackId.value}/preview?v=${previewCacheKey.value}` : "",
 );
 const remainingTime = computed(() => Math.max(0, duration.value - currentTime.value));
+const progressPercent = computed(() => {
+  if (duration.value <= 0) return 0;
+  return Math.max(0, Math.min(100, (currentTime.value / duration.value) * 100));
+});
 
 function onLoadedMetadata() {
   const d = Number(audioEl.value?.duration || 30);
@@ -123,11 +138,40 @@ function formatTime(value) {
 
 <style scoped>
 .player-card {
-  background: linear-gradient(180deg, #f8fbff 0%, #f1f6ff 100%);
-  border-radius: 16px;
-  border: 1px solid #dbe7fb;
-  box-shadow: 0 10px 26px rgba(70, 102, 156, 0.14);
-  padding: 0.95rem 1rem;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(220px 160px at 2% -20%, rgba(245, 158, 11, 0.18), transparent 60%),
+    radial-gradient(260px 180px at 98% -10%, rgba(14, 165, 233, 0.2), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f4f9ff 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(141, 179, 231, 0.38);
+  box-shadow: 0 14px 30px rgba(41, 72, 126, 0.18);
+  padding: 0.95rem 1rem 0.85rem;
+}
+
+.player-head {
+  margin-bottom: 0.55rem;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  font-weight: 800;
+}
+
+.track-title {
+  margin: 0.12rem 0 0;
+  color: #112649;
+  font-weight: 700;
+  font-size: 0.96rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .row-main {
@@ -141,9 +185,9 @@ function formatTime(value) {
   height: 50px;
   border-radius: 999px;
   border: 0;
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #4f46e5 100%);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.32);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -152,12 +196,12 @@ function formatTime(value) {
 
 .btn-play:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.36);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.42);
 }
 
 .icon {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .btn-play:disabled,
@@ -176,7 +220,13 @@ function formatTime(value) {
   appearance: none;
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #bfdbfe 0%, #c7d2fe 100%);
+  background: linear-gradient(
+    90deg,
+    #3b82f6 0%,
+    #60a5fa var(--progress),
+    #cfe0fa var(--progress),
+    #e3ecfb 100%
+  );
   outline: none;
 }
 
@@ -200,14 +250,14 @@ function formatTime(value) {
 }
 
 .times {
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
   display: flex;
   justify-content: space-between;
 }
 
 .time {
-  color: #334155;
-  font-size: 0.84rem;
+  color: #1f3b66;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -216,19 +266,45 @@ function formatTime(value) {
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  border: 1px solid #c9daf8;
-  background: #ffffff;
-  color: #1e3a8a;
+  border: 1px solid #bcd3fb;
+  background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
+  color: #1e40af;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .icon-mute {
-  font-size: 0.95rem;
+  font-size: 1rem;
+}
+
+.status-line {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  color: #456188;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .error-text {
   margin: 0.5rem 0 0;
   color: #b91c1c;
   font-size: 0.85rem;
+}
+
+@media (max-width: 575px) {
+  .track-title {
+    white-space: normal;
+  }
+
+  .row-main {
+    gap: 0.6rem;
+  }
+
+  .btn-play {
+    width: 46px;
+    height: 46px;
+  }
 }
 </style>

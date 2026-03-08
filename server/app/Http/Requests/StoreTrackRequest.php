@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Track;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Validator;
@@ -69,6 +70,17 @@ class StoreTrackRequest extends FormRequest
                 $allowed = ['mp3', 'wav', 'ogg', 'm4a', 'flac'];
                 if ($ext === '' || ! in_array($ext, $allowed, true)) {
                     $validator->errors()->add('track_audio', 'The track audio field must be a file of type: mp3, wav, ogg, m4a, flac.');
+                }
+            }
+
+            $normalizedTitle = trim((string) $this->input('track_title', ''));
+            if ($normalizedTitle !== '') {
+                $exists = Track::query()
+                    ->whereRaw('LOWER(track_title) = ?', [mb_strtolower($normalizedTitle)])
+                    ->exists();
+
+                if ($exists) {
+                    $validator->errors()->add('track_title', 'A track with this title already exists.');
                 }
             }
         });

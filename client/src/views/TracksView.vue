@@ -5,6 +5,40 @@
       <span class="badge text-bg-dark">{{ filteredTracks.length }} items</span>
     </div>
 
+    <div class="card card-body mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label mb-1">Filter by genre</label>
+          <select v-model="selectedGenreFilter" class="form-select">
+            <option value="">All genres</option>
+            <option v-for="g in genres" :key="`filter-genre-${g.genre_id}`" :value="g.genre_name">{{ g.genre_name }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1">Filter by artist</label>
+          <select v-model="selectedArtistFilter" class="form-select">
+            <option value="">All artists</option>
+            <option v-for="a in artists" :key="`filter-artist-${a.artist_id}`" :value="a.artist_name">{{ a.artist_name }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label mb-1">Filter by BPM</label>
+          <select v-model="selectedBpmFilter" class="form-select">
+            <option value="">All BPM</option>
+            <option v-for="bpm in bpmFilterOptions" :key="`filter-bpm-${bpm}`" :value="String(bpm)">{{ bpm }}</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+          <button class="btn btn-outline-secondary" type="button" @click="shuffleTracks">
+            Shuffle order
+          </button>
+          <button class="btn btn-outline-danger" type="button" @click="resetTrackFilters">
+            Reset filters
+          </button>
+        </div>
+      </div>
+    </div>
+
     <form v-if="isAdmin" class="card card-body mb-3" @submit.prevent="createTrack">
       <h3 class="h6 mb-3">Create new track (Admin)</h3>
 
@@ -326,6 +360,9 @@ export default {
       isFullTrackPlaying: false,
       fullTrackDuration: 0,
       fullTrackCurrentTime: 0,
+      selectedGenreFilter: "",
+      selectedArtistFilter: "",
+      selectedBpmFilter: "",
     };
   },
   computed: {
@@ -333,8 +370,27 @@ export default {
     ...mapState(useSearchStore, ["searchWord"]),
     filteredTracks() {
       const word = (this.searchWord || "").toLowerCase().trim();
-      if (!word) return this.tracks;
       return this.tracks.filter((t) => {
+        const genreFilter = String(this.selectedGenreFilter || "").trim().toLowerCase();
+        if (genreFilter) {
+          const hasGenre =
+            String(t.genre?.genre_name || "").trim().toLowerCase() === genreFilter
+            || (t.genres || []).some((g) => String(g?.genre_name || "").trim().toLowerCase() === genreFilter);
+          if (!hasGenre) return false;
+        }
+
+        const artistFilter = String(this.selectedArtistFilter || "").trim().toLowerCase();
+        if (artistFilter) {
+          const hasArtist = (t.artists || []).some((a) => String(a?.artist_name || "").trim().toLowerCase() === artistFilter);
+          if (!hasArtist) return false;
+        }
+
+        const bpmFilter = Number(this.selectedBpmFilter || 0);
+        if (bpmFilter > 0 && Number(t?.bpm_value || 0) !== bpmFilter) {
+          return false;
+        }
+
+        if (!word) return true;
         const hay = [
           t.track_title,
           t.genre?.genre_name,
@@ -344,6 +400,12 @@ export default {
           .toLowerCase();
         return hay.includes(word);
       });
+    },
+    bpmFilterOptions() {
+      const values = (this.tracks || [])
+        .map((t) => Number(t?.bpm_value || 0))
+        .filter((bpm) => Number.isFinite(bpm) && bpm > 0);
+      return Array.from(new Set(values)).sort((a, b) => a - b);
     },
     previewDuration() {
       return Math.max(0, Number(this.form.preview_end_at || 0) - Number(this.form.preview_start_at || 0));
@@ -368,6 +430,22 @@ export default {
     },
     trackId(track) {
       return track?.id ?? track?.track_id;
+    },
+    shuffleArray(items) {
+      const arr = [...items];
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    },
+    shuffleTracks() {
+      this.tracks = this.shuffleArray(this.tracks || []);
+    },
+    resetTrackFilters() {
+      this.selectedGenreFilter = "";
+      this.selectedArtistFilter = "";
+      this.selectedBpmFilter = "";
     },
     addArtistField() {
       this.form.artist_names.push("");
@@ -828,7 +906,7 @@ export default {
         genreService.list(),
         artistService.list(),
       ]);
-      this.tracks = tracksRes.data || [];
+      this.tracks = this.shuffleArray(tracksRes.data || []);
       this.genres = genresRes.data || [];
       this.artists = artistsRes.data || [];
     },
