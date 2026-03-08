@@ -124,9 +124,17 @@
           <div class="mt-2">
             <label class="form-label mb-1">Artists</label>
             <div v-for="(artist, idx) in edit.artist_names" :key="`edit-artist-${idx}`" class="d-flex gap-2 mb-1">
-              <input v-model="edit.artist_names[idx]" class="form-control" :placeholder="`Artist ${idx + 1}`" />
+              <input
+                v-model="edit.artist_names[idx]"
+                class="form-control"
+                :placeholder="`Artist ${idx + 1}`"
+                list="edit-artist-options"
+              />
               <button v-if="edit.artist_names.length > 1" class="btn btn-outline-danger btn-sm" type="button" @click="removeArtistField(idx)">-</button>
             </div>
+            <datalist id="edit-artist-options">
+              <option v-for="a in artists" :key="a.artist_id" :value="a.artist_name"></option>
+            </datalist>
             <button class="btn btn-outline-secondary btn-sm" type="button" @click="addArtistField">+ Add artist</button>
           </div>
 
@@ -158,6 +166,7 @@ import { mapState } from "pinia";
 import { RouterLink } from "vue-router";
 import service from "@/api/trackService";
 import genreService from "@/api/genreService";
+import artistService from "@/api/artistService";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { storageUrl } from "@/utils/storageUrl";
 import NeonWavePlayer from "@/components/AudioPlayer/NeonWavePlayer.vue";
@@ -182,6 +191,7 @@ export default {
       error: "",
       track: null,
       genres: [],
+      artists: [],
       edit: emptyEdit(),
       saving: false,
       editError: "",
@@ -280,7 +290,9 @@ export default {
         track_length_sec: t.track_length_sec || null,
         preview_start_at: Number(t.preview_start_at ?? 0),
         preview_end_at: Number(t.preview_end_at ?? 30),
-        artist_names: (t.artists || []).map((a) => a.artist_name) || [""],
+        artist_names: (t.artists || [])
+          .map((a) => String(a?.artist_name || "").trim())
+          .filter(Boolean),
       };
       if (this.edit.artist_names.length === 0) this.edit.artist_names = [""];
       this.audioPreviewUrl = this.previewUrl(t);
@@ -487,9 +499,14 @@ export default {
       this.error = "";
       try {
         const id = this.$route.params.id;
-        const [trackRes, genresRes] = await Promise.all([service.show(id), genreService.list()]);
+        const [trackRes, genresRes, artistsRes] = await Promise.all([
+          service.show(id),
+          genreService.list(),
+          artistService.list(),
+        ]);
         this.track = trackRes.data || null;
         this.genres = genresRes.data || [];
+        this.artists = artistsRes.data || [];
         this.initEditFromTrack();
       } catch (err) {
         this.error = err?.response?.data?.message || "Track loading failed.";

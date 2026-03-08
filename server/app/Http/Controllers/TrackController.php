@@ -203,6 +203,8 @@ class TrackController extends Controller
             }
         }
 
+        Track::syncCsvExports();
+
         return response()->json([
             'message' => 'Track created successfully',
             'data' => $track->load(['genre', 'genres', 'artists']),
@@ -308,6 +310,8 @@ class TrackController extends Controller
         if ($audioReplaced && $oldPreviewPath !== '' && $oldPreviewPath !== (string) ($track->preview_path ?? '') && Storage::disk('public')->exists($oldPreviewPath)) {
             Storage::disk('public')->delete($oldPreviewPath);
         }
+
+        Track::syncCsvExports();
 
         return response()->json([
             'message' => 'Track updated successfully',
@@ -465,6 +469,8 @@ class TrackController extends Controller
             ], 422);
         }
 
+        Track::syncCsvExports();
+
         return response()->json([
             'message' => 'Preview regenerated successfully',
             'data' => $track->load(['genre', 'genres', 'artists']),
@@ -501,9 +507,11 @@ class TrackController extends Controller
             'Content-Type' => 'audio/mpeg',
             'Content-Length' => (string) $length,
             'Accept-Ranges' => 'bytes',
-            'Content-Range' => "bytes {$start}-{$end}/{$fileSize}",
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ];
+        if ($status === 206) {
+            $headers['Content-Range'] = "bytes {$start}-{$end}/{$fileSize}";
+        }
 
         if (is_string($downloadName) && $downloadName !== '') {
             $headers['Content-Disposition'] = 'attachment; filename="' . str_replace('"', '', $downloadName) . '"';

@@ -1,37 +1,46 @@
 <template>
   <main class="home-shell">
     <section class="hero-card reveal-up">
-      <div class="hero-glow hero-glow-left" aria-hidden="true"></div>
-      <div class="hero-glow hero-glow-right" aria-hidden="true"></div>
+      <div class="hero-noise" aria-hidden="true"></div>
+      <div class="hero-orb hero-orb-a" aria-hidden="true"></div>
+      <div class="hero-orb hero-orb-b" aria-hidden="true"></div>
 
-      <p class="hero-label">DOOMSHOP Records</p>
-      <h1 class="hero-title">Home</h1>
-      <p class="hero-description">Use this page to quickly access core features: tracks, genres, artists, cart, and admin sections.</p>
+      <p class="hero-label">DOOMSHOP Records Control Room</p>
+      <h1 class="hero-title">Build Your Next Sound.</h1>
+      <p class="hero-description">
+        One colorful dashboard for tracks, genres, artists and cart flows.
+        Jump in fast, edit faster, keep the catalog clean.
+      </p>
+
       <div class="hero-cta">
-        <RouterLink class="btn btn-primary-clean" to="/tracks">Browse Tracks</RouterLink>
+        <RouterLink class="btn btn-primary-clean" to="/tracks">Open Tracks</RouterLink>
+        <RouterLink class="btn btn-ghost-clean" to="/artists">Artists</RouterLink>
         <RouterLink class="btn btn-ghost-clean" to="/genres">Genres</RouterLink>
-      </div>
-      <div class="hero-strip">
-        <span class="hero-chip">Track previews</span>
-        <span class="hero-chip">Artist / Genre lists</span>
-        <span class="hero-chip">Cart management</span>
       </div>
 
       <div class="hero-metrics">
         <div class="metric-card">
-          <p class="metric-label">Quick Route</p>
-          <p class="metric-value">Tracks</p>
+          <p class="metric-label">Core Module</p>
+          <p class="metric-value">Tracks + Preview</p>
         </div>
         <div class="metric-card">
-          <p class="metric-label">Management</p>
+          <p class="metric-label">Catalog Control</p>
           <p class="metric-value">Artists / Genres</p>
         </div>
         <div class="metric-card metric-wave">
-          <p class="metric-label">Playback</p>
+          <p class="metric-label">Live Pulse</p>
           <div class="wave-bars" aria-hidden="true">
             <span></span><span></span><span></span><span></span><span></span>
           </div>
         </div>
+      </div>
+
+      <div class="ticker" aria-hidden="true">
+        <span>TRACK PREVIEWS</span>
+        <span>ARTIST MANAGEMENT</span>
+        <span>GENRE ROUTING</span>
+        <span>CART FLOW</span>
+        <span>TRACK PREVIEWS</span>
       </div>
     </section>
 
@@ -96,80 +105,90 @@ export default {};
 .home-shell {
   max-width: 1160px;
   margin: 0 auto;
-  padding: 0.5rem 0.15rem 0.8rem;
+  padding: 0.4rem 0.1rem 0.8rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.05rem;
 }
 
 .hero-card {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
-  padding: 2rem 1.9rem;
+  isolation: isolate;
+  border-radius: 22px;
+  padding: 2.2rem 2rem 1.5rem;
   background:
-    radial-gradient(circle at 16% -12%, rgba(56, 189, 248, 0.2), transparent 42%),
-    radial-gradient(circle at 95% 12%, rgba(99, 102, 241, 0.2), transparent 35%),
-    linear-gradient(118deg, #0b1736 0%, #101d3f 52%, #1b2b55 100%);
-  border: 1px solid #1e293b;
+    radial-gradient(circle at 15% -15%, rgba(255, 160, 55, 0.35), transparent 40%),
+    radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.28), transparent 35%),
+    linear-gradient(120deg, #2c0b4b 0%, #0b1c4f 46%, #024f65 100%);
+  border: 1px solid rgba(186, 226, 255, 0.25);
   color: #f8fafc;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 18px 38px rgba(8, 19, 43, 0.35);
 }
 
-.hero-glow {
+.hero-noise {
   position: absolute;
-  width: 250px;
-  height: 250px;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.8) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
+}
+
+.hero-orb {
+  position: absolute;
+  width: 260px;
+  height: 260px;
   border-radius: 999px;
-  filter: blur(32px);
-  opacity: 0.34;
+  filter: blur(40px);
+  opacity: 0.4;
   pointer-events: none;
   animation: floatGlow 6s ease-in-out infinite;
+  z-index: -1;
 }
 
-.hero-glow-left {
-  top: -90px;
-  left: -40px;
+.hero-orb-a {
+  top: -100px;
+  left: -70px;
+  background: #f59e0b;
+}
+
+.hero-orb-b {
+  bottom: -130px;
+  right: -80px;
   background: #22d3ee;
-}
-
-.hero-glow-right {
-  bottom: -115px;
-  right: -65px;
-  background: #818cf8;
-  animation-delay: 1.3s;
+  animation-delay: 1.1s;
 }
 
 .hero-label {
-  margin: 0 0 0.4rem;
-  font-size: 0.86rem;
-  letter-spacing: 0.1em;
+  margin: 0 0 0.55rem;
+  font-size: 0.79rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-weight: 700;
-  color: #93c5fd;
+  font-weight: 800;
+  color: #fbcfe8;
 }
 
 .hero-title {
   margin: 0;
-  font-size: clamp(2.2rem, 3.6vw, 3.1rem);
-  line-height: 1.08;
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  line-height: 1.03;
   font-weight: 900;
-  position: relative;
+  max-width: 16ch;
 }
 
 .hero-description {
-  margin: 0.75rem 0 0;
-  max-width: 58ch;
+  margin: 0.8rem 0 0;
+  max-width: 54ch;
   color: #dbeafe;
   line-height: 1.5;
-  font-size: 1.08rem;
-  position: relative;
+  font-size: 1.03rem;
 }
 
 .hero-cta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 1.35rem;
+  gap: 0.65rem;
+  margin-top: 1.2rem;
 }
 
 .btn-primary-clean,
@@ -177,10 +196,10 @@ export default {};
 .btn-outline-clean {
   text-decoration: none;
   transition: all 0.22s ease;
-  border-radius: 999px;
-  padding: 0.72rem 1.3rem;
+  border-radius: 12px;
+  padding: 0.7rem 1.2rem;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .btn-primary-clean:focus-visible,
@@ -192,60 +211,42 @@ export default {};
 }
 
 .btn-primary-clean {
-  background: #f8fafc;
-  color: #0f172a;
-  border: 1px solid #f8fafc;
+  background: linear-gradient(130deg, #ffd8a8, #ffb36b);
+  color: #3a1a00;
+  border: 1px solid rgba(255, 228, 190, 0.7);
+  box-shadow: 0 10px 20px rgba(255, 149, 0, 0.25);
 }
 
 .btn-primary-clean:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  color: #3a1a00;
   transform: translateY(-2px);
 }
 
 .btn-ghost-clean {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   color: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .btn-ghost-clean:hover {
-  background: rgba(226, 232, 240, 0.12);
+  background: rgba(226, 232, 240, 0.16);
   color: #f8fafc;
   transform: translateY(-2px);
 }
 
-.hero-strip {
-  margin-top: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  position: relative;
-}
-
-.hero-chip {
-  border: 1px solid rgba(191, 219, 254, 0.3);
-  background: rgba(15, 23, 42, 0.35);
-  color: #e2e8f0;
-  border-radius: 999px;
-  padding: 0.32rem 0.8rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
 .hero-metrics {
-  margin-top: 1rem;
+  margin-top: 1.05rem;
   display: grid;
   gap: 0.6rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .metric-card {
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(15, 23, 42, 0.36);
+  border: 1px solid rgba(186, 226, 255, 0.32);
+  background: rgba(10, 24, 54, 0.4);
   border-radius: 12px;
   padding: 0.65rem 0.75rem;
+  backdrop-filter: blur(8px);
 }
 
 .metric-label {
@@ -253,14 +254,14 @@ export default {};
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #93c5fd;
+  color: #a5f3fc;
   font-weight: 700;
 }
 
 .metric-value {
   margin: 0.2rem 0 0;
   font-size: 1rem;
-  color: #f8fafc;
+  color: #ecfeff;
   font-weight: 800;
 }
 
@@ -289,12 +290,32 @@ export default {};
 .wave-bars span:nth-child(4) { height: 13px; animation-delay: 0.3s; }
 .wave-bars span:nth-child(5) { height: 18px; animation-delay: 0.4s; }
 
+.ticker {
+  margin-top: 0.95rem;
+  display: flex;
+  gap: 1.4rem;
+  overflow: hidden;
+  white-space: nowrap;
+  border-top: 1px solid rgba(186, 226, 255, 0.25);
+  padding-top: 0.7rem;
+}
+
+.ticker span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  color: #bae6fd;
+  opacity: 0.9;
+  animation: tickerMove 9s linear infinite;
+}
+
 .panel-card {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  border-radius: 18px;
+  border: 1px solid rgba(140, 171, 214, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 252, 255, 0.95));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   padding: 1.35rem;
+  backdrop-filter: blur(10px);
 }
 
 .section-head {
@@ -303,8 +324,8 @@ export default {};
 
 .section-title {
   margin: 0;
-  font-size: 1.35rem;
-  color: #0f172a;
+  font-size: 1.3rem;
+  color: #0f2145;
   font-weight: 800;
 }
 
@@ -343,16 +364,16 @@ export default {};
   font-weight: 600;
   font-size: 1rem;
   color: #0f172a;
-  border: 1px solid #dbe3ee;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid rgba(148, 180, 225, 0.45);
+  background: linear-gradient(180deg, #fdfefe 0%, #edf6ff 100%);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .quick-link:hover {
-  background: #f8fafc;
+  background: linear-gradient(180deg, #ffffff 0%, #eaf4ff 100%);
   color: #0f172a;
-  border-color: #bfd5ff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: #93c5fd;
+  box-shadow: 0 12px 24px rgba(26, 64, 121, 0.14);
   transform: translateY(-2px);
 }
 
@@ -376,8 +397,8 @@ export default {};
 }
 
 .feature-card {
-  border: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(148, 180, 225, 0.4);
+  background: linear-gradient(180deg, #ffffff 0%, #f1f8ff 100%);
   border-radius: 14px;
   padding: 1rem;
   display: grid;
@@ -467,6 +488,11 @@ export default {};
   }
 }
 
+@keyframes tickerMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-18px); }
+}
+
 @media (max-width: 767px) {
   .home-shell {
     padding-inline: 0;
@@ -485,7 +511,7 @@ export default {};
   }
 
   .hero-card {
-    padding: 1.5rem 1.2rem;
+    padding: 1.5rem 1.2rem 1.1rem;
   }
 
   .hero-metrics {

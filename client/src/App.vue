@@ -3,7 +3,7 @@
     <Header />
     <Menu />
     <Breadcrumb />
-    <main class="p-3 border rounded bg-white">
+    <main class="app-main p-3">
       <RouterView />
     </main>
     <Footer />
@@ -26,5 +26,9 @@ export default {
 <style scoped>
 .app-shell {
   max-width: 1600px;
+}
+
+.app-main {
+  border-radius: 22px;
 }
 </style>
