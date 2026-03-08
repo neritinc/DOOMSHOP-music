@@ -15,6 +15,7 @@ class CartItem extends Model
     protected $fillable = [
         'cart_id',
         'track_id',
+        'album_id',
         'pcs',
     ];
 
@@ -26,5 +27,10 @@ class CartItem extends Model
     public function track(): BelongsTo
     {
         return $this->belongsTo(Track::class);
+    }
+
+    public function album(): BelongsTo
+    {
+        return $this->belongsTo(Album::class);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTrackRequest;
 use App\Http\Requests\UpdateTrackRequest;
 use App\Jobs\GenerateTrackPreview;
+use App\Models\Album;
 use App\Models\Artist;
 use App\Models\Genre;
 use App\Models\Track;
@@ -102,7 +103,7 @@ class TrackController extends Controller
     public function index(Request $request): JsonResponse
     {
         $isAdmin = $this->isAdmin($request);
-        $tracks = Track::with(['genre', 'genres', 'artists'])->get()->map(
+        $tracks = Track::with(['genre', 'genres', 'artists', 'album'])->get()->map(
             fn (Track $track) => $this->transformTrackForViewer($track, $isAdmin)
         );
 
@@ -114,7 +115,7 @@ class TrackController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $track = Track::with(['genre', 'genres', 'artists'])->find($id);
+        $track = Track::with(['genre', 'genres', 'artists', 'album'])->find($id);
 
         if (! $track) {
             return response()->json([
@@ -135,6 +136,7 @@ class TrackController extends Controller
 
         $genreIds = $this->resolveGenreIds($data);
         $genreId = $genreIds[0] ?? null;
+        $albumId = $this->resolveAlbumId($data);
 
         $coverPath = $data['track_cover'] ?? null;
         if ($request->hasFile('track_cover_file')) {
@@ -148,12 +150,15 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
+        $releaseDate = trim((string) ($data['release_date'] ?? ''));
+        $releaseDate = $releaseDate !== '' ? $releaseDate : null;
 
         $track = Track::query()->create([
             'genre_id' => $genreId,
+            'album_id' => $albumId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
-            'release_date' => $data['release_date'] ?? null,
+            'release_date' => $releaseDate,
             'track_length_sec' => $data['track_length_sec'] ?? null,
             'track_price_eur' => isset($data['track_price_eur']) ? round((float) $data['track_price_eur'], 2) : 1.99,
             'track_cover' => $coverPath,
@@ -207,7 +212,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Track created successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
         ], 201);
     }
 
@@ -225,6 +230,7 @@ class TrackController extends Controller
 
         $genreIds = $this->resolveGenreIds($data);
         $genreId = $genreIds[0] ?? null;
+        $albumId = $this->resolveAlbumId($data);
 
         $oldCoverPath = (string) ($track->track_cover ?? '');
         $oldTrackPath = (string) ($track->track_path ?? '');
@@ -246,12 +252,15 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
+        $releaseDate = trim((string) ($data['release_date'] ?? ''));
+        $releaseDate = $releaseDate !== '' ? $releaseDate : null;
 
         $track->fill([
             'genre_id' => $genreId,
+            'album_id' => $albumId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
-            'release_date' => $data['release_date'] ?? null,
+            'release_date' => $releaseDate,
             'track_length_sec' => $data['track_length_sec'] ?? null,
             'track_price_eur' => isset($data['track_price_eur']) ? round((float) $data['track_price_eur'], 2) : ($track->track_price_eur ?? 1.99),
             'track_cover' => $coverPath,
@@ -315,7 +324,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Track updated successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
         ]);
     }
 
@@ -473,7 +482,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Preview regenerated successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
         ]);
     }
 
@@ -659,6 +668,36 @@ class TrackController extends Controller
         $genreIds = array_values(array_unique(array_filter($genreIds, static fn ($id) => (int) $id > 0)));
 
         return $genreIds;
+    }
+
+    private function resolveAlbumId(array $data): ?int
+    {
+        if (! empty($data['album_id'])) {
+            return (int) $data['album_id'];
+        }
+
+        if (! empty($data['album_title'])) {
+            $normalizedTitle = trim((string) $data['album_title']);
+            if ($normalizedTitle === '') {
+                return null;
+            }
+
+            $album = Album::query()
+                ->whereRaw('LOWER(title) = ?', [mb_strtolower($normalizedTitle)])
+                ->first();
+
+            if (! $album) {
+                $album = Album::query()->create([
+                    'title' => $normalizedTitle,
+                    'price_eur' => 0,
+                    'is_active' => true,
+                ]);
+            }
+
+            return (int) $album->id;
+        }
+
+        return null;
     }
 
     private function resolveGenreNameToId(string $genreName): ?int
@@ -985,4 +1024,3 @@ class TrackController extends Controller
         }
     }
 }
-

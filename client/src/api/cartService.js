@@ -10,6 +10,9 @@ export default {
   addMyCartItem(payload) {
     return apiClient.post("/my-cart-items", payload);
   },
+  myCartItems() {
+    return apiClient.get("/my-cart-items");
+  },
   allCarts() {
     return apiClient.get("/carts");
   },

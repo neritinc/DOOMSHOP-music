@@ -12,6 +12,7 @@
         <div class="meta-box">
           <div class="meta-row"><span class="meta-key">Artists</span><span class="meta-val">{{ artistNames(track) }}</span></div>
           <div class="meta-row"><span class="meta-key">Genre</span><span class="meta-val">{{ track.genre?.genre_name || "-" }}</span></div>
+          <div class="meta-row"><span class="meta-key">Album</span><span class="meta-val">{{ track.album?.title || "-" }}</span></div>
           <div class="meta-row"><span class="meta-key">BPM</span><span class="meta-val">{{ track.bpm_value || "-" }}</span></div>
           <div class="meta-row"><span class="meta-key">Release</span><span class="meta-val">{{ track.release_date || "-" }}</span></div>
           <div class="meta-row"><span class="meta-key">Length</span><span class="meta-val">{{ formatLength(track.track_length_sec) }}</span></div>
@@ -92,6 +93,13 @@
             </div>
             <div class="col-md-3"><input v-model.number="edit.bpm_value" class="form-control" type="number" min="1" max="999" placeholder="BPM" /></div>
             <div class="col-md-3"><input v-model.number="edit.track_price_eur" class="form-control" type="number" min="0" step="0.01" placeholder="Price (€)" /></div>
+            <div class="col-md-3">
+              <select v-model="edit.album_id" class="form-select">
+                <option value="">No album</option>
+                <option v-for="a in albums" :key="`edit-album-${a.id}`" :value="String(a.id)">{{ a.title }}</option>
+              </select>
+            </div>
+            <div class="col-md-3"><input v-model="edit.album_title" class="form-control" placeholder="Or new album title" /></div>
           </div>
 
           <div class="row g-2 mt-1">
@@ -167,12 +175,15 @@ import { RouterLink } from "vue-router";
 import service from "@/api/trackService";
 import genreService from "@/api/genreService";
 import artistService from "@/api/artistService";
+import albumService from "@/api/albumService";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { storageUrl } from "@/utils/storageUrl";
 import NeonWavePlayer from "@/components/AudioPlayer/NeonWavePlayer.vue";
 
 const emptyEdit = () => ({
   track_title: "",
+  album_id: "",
+  album_title: "",
   genre_name: "",
   bpm_value: null,
   track_price_eur: 1.99,
@@ -192,6 +203,7 @@ export default {
       track: null,
       genres: [],
       artists: [],
+      albums: [],
       edit: emptyEdit(),
       saving: false,
       editError: "",
@@ -290,6 +302,8 @@ export default {
       const t = this.track || {};
       this.edit = {
         track_title: t.track_title || "",
+        album_id: t.album?.id ? String(t.album.id) : "",
+        album_title: "",
         genre_name: t.genre?.genre_name || "",
         bpm_value: t.bpm_value || null,
         track_price_eur: Number(t.track_price_eur ?? 1.99),
@@ -507,14 +521,16 @@ export default {
       this.error = "";
       try {
         const id = this.$route.params.id;
-        const [trackRes, genresRes, artistsRes] = await Promise.all([
+        const [trackRes, genresRes, artistsRes, albumsRes] = await Promise.all([
           service.show(id),
           genreService.list(),
           artistService.list(),
+          albumService.list(),
         ]);
         this.track = trackRes.data || null;
         this.genres = genresRes.data || [];
         this.artists = artistsRes.data || [];
+        this.albums = albumsRes.data || [];
         this.initEditFromTrack();
       } catch (err) {
         this.error = err?.response?.data?.message || "Track loading failed.";
@@ -530,6 +546,11 @@ export default {
       try {
         const payload = new FormData();
         payload.append("track_title", this.edit.track_title);
+        if (this.edit.album_id) {
+          payload.append("album_id", String(this.edit.album_id));
+        } else if (String(this.edit.album_title || "").trim() !== "") {
+          payload.append("album_title", String(this.edit.album_title).trim());
+        }
         if (this.selectedGenre?.genre_id) payload.append("genre_id", String(this.selectedGenre.genre_id));
         else payload.append("genre_name", this.edit.genre_name);
 

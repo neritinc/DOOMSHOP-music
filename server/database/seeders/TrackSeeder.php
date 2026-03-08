@@ -61,8 +61,14 @@ class TrackSeeder extends Seeder
             $id = (int) $this->value($row, 'id', 0);
             $genreId = (int) $this->value($row, 'genre_id', 0);
             $title = (string) $this->value($row, 'track_title', '');
-            $releaseDateRaw = (string) $this->value($row, 'release_date', '');
-            $releaseDate = str_replace('.', '-', $releaseDateRaw);
+            $releaseDateRaw = trim((string) $this->value($row, 'release_date', ''));
+            $releaseDate = null;
+            if ($releaseDateRaw !== '') {
+                $normalizedDate = str_replace('.', '-', $releaseDateRaw);
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalizedDate)) {
+                    $releaseDate = $normalizedDate;
+                }
+            }
             $bpm = (int) $this->value($row, 'bpm_value', 0);
             $trackLength = (int) $this->value($row, 'track_length', 0);
             $trackCover = $this->value($row, 'track_cover');

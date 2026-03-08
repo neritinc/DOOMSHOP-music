@@ -18,6 +18,7 @@ class Track extends Model
 
     protected $fillable = [
         'genre_id',
+        'album_id',
         'track_title',
         'bpm_value',
         'release_date',
@@ -40,6 +41,7 @@ class Track extends Model
 
             $shouldSyncTracksCsv = $track->wasRecentlyCreated
                 || $track->wasChanged('genre_id')
+                || $track->wasChanged('album_id')
                 || $track->wasChanged('track_title')
                 || $track->wasChanged('bpm_value')
                 || $track->wasChanged('release_date')
@@ -133,6 +135,7 @@ class Track extends Model
             ->select([
                 'tracks.id',
                 'tracks.genre_id',
+                'tracks.album_id',
                 'tracks.track_title',
                 'tracks.bpm_value',
                 'tracks.release_date',
@@ -152,11 +155,12 @@ class Track extends Model
             ->groupBy('track_id')
             ->pluck('artist_id', 'track_id');
 
-        $lines = ['"id";"genre_id";"track_title";"bpm_value";"artist_id";"release_date";"track_length";"track_price_eur";"track_cover";"track_path";"preview_start_at";"preview_end_at";"preview_path"'];
+        $lines = ['"id";"genre_id";"album_id";"track_title";"bpm_value";"artist_id";"release_date";"track_length";"track_price_eur";"track_cover";"track_path";"preview_start_at";"preview_end_at";"preview_path"'];
 
         foreach ($rows as $row) {
             $id = (int) $row->id;
             $genreId = (int) ($row->genre_id ?? 0);
+            $albumId = (int) ($row->album_id ?? 0);
             $title = str_replace('"', '""', (string) ($row->track_title ?? ''));
             $bpm = (int) ($row->bpm_value ?? 0);
             $artistId = (int) ($artistMap[$id] ?? 0);
@@ -172,7 +176,7 @@ class Track extends Model
             $previewEnd = (int) ($row->preview_end_at ?? 30);
             $previewPath = str_replace('"', '""', (string) ($row->preview_path ?? ''));
 
-            $lines[] = "\"{$id}\";\"{$genreId}\";\"{$title}\";\"{$bpm}\";\"{$artistId}\";\"{$releaseDate}\";\"{$trackLength}\";\"{$trackPrice}\";\"{$trackCover}\";\"{$trackPath}\";\"{$previewStart}\";\"{$previewEnd}\";\"{$previewPath}\"";
+            $lines[] = "\"{$id}\";\"{$genreId}\";\"{$albumId}\";\"{$title}\";\"{$bpm}\";\"{$artistId}\";\"{$releaseDate}\";\"{$trackLength}\";\"{$trackPrice}\";\"{$trackCover}\";\"{$trackPath}\";\"{$previewStart}\";\"{$previewEnd}\";\"{$previewPath}\"";
         }
 
         $csvPath = database_path('csv/tracks.csv');
@@ -187,6 +191,11 @@ class Track extends Model
     public function genre(): BelongsTo
     {
         return $this->belongsTo(Genre::class, 'genre_id', 'genre_id');
+    }
+
+    public function album(): BelongsTo
+    {
+        return $this->belongsTo(Album::class, 'album_id', 'id');
     }
 
     public function genres(): BelongsToMany

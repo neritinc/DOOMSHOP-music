@@ -9,6 +9,7 @@ const routes = [
   { path: "/tracks/:id", name: "track-detail", component: () => import("../views/TrackDetailView.vue"), meta: { title: "Track Details", breadcrumb: "Track Details" } },
   { path: "/genres", name: "genres", component: () => import("../views/GenresView.vue"), meta: { title: "Genres", breadcrumb: "Genres", roles: [1, 2] } },
   { path: "/artists", name: "artists", component: () => import("../views/ArtistsView.vue"), meta: { title: "Artists", breadcrumb: "Artists", roles: [1, 2] } },
+  { path: "/albums", name: "albums", component: () => import("../views/AlbumsView.vue"), meta: { title: "Albums", breadcrumb: "Albums", roles: [1, 2] } },
   { path: "/artists/:id/tracks", name: "artist-tracks", component: () => import("../views/ArtistTracksView.vue"), meta: { title: "Artist Tracks", breadcrumb: "Artist Tracks", roles: [1, 2] } },
   { path: "/recommendations", name: "recommendations", component: () => import("../views/MusicRecommendations.vue"), meta: { title: "Recommendations", breadcrumb: "Recommendations" } },
   { path: "/liveshows-mixes", name: "liveshows-mixes", component: () => import("../views/LiveshowsMixesView.vue"), meta: { title: "LIVESHOWS and Mixes", breadcrumb: "LIVESHOWS and Mixes" } },

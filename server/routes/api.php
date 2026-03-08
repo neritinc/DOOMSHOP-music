@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArtistController;
+use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\GenreController;
@@ -104,6 +105,19 @@ Route::post('artists', [ArtistController::class, 'store'])
 Route::patch('artists/{id}', [ArtistController::class, 'update'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::delete('artists/{id}', [ArtistController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+//endregion
+
+//region Albums
+Route::get('albums', [AlbumController::class, 'index']);
+Route::get('albums/{id}', [AlbumController::class, 'show']);
+Route::post('albums', [AlbumController::class, 'store'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::patch('albums/{id}', [AlbumController::class, 'update'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('albums/{id}', [AlbumController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::patch('albums/{id}/tracks', [AlbumController::class, 'syncTracks'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 
