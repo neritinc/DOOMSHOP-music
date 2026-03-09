@@ -150,20 +150,59 @@ class Track extends Model
             ->orderBy('tracks.id')
             ->get();
 
-        $artistMap = DB::table('track_artists')
-            ->select('track_id', DB::raw('MIN(artist_id) as artist_id'))
-            ->groupBy('track_id')
-            ->pluck('artist_id', 'track_id');
+        $artistRows = DB::table('track_artists')
+            ->select(['track_id', 'artist_id'])
+            ->orderBy('track_id')
+            ->orderBy('artist_id')
+            ->get();
 
-        $lines = ['"id";"genre_id";"album_id";"track_title";"bpm_value";"artist_id";"release_date";"track_length";"track_price_eur";"track_cover";"track_path";"preview_start_at";"preview_end_at";"preview_path"'];
+        $genreRows = DB::table('track_genres')
+            ->select(['track_id', 'genre_id'])
+            ->orderBy('track_id')
+            ->orderBy('genre_id')
+            ->get();
+
+        $artistMap = [];
+        foreach ($artistRows as $artistRow) {
+            $trackId = (int) ($artistRow->track_id ?? 0);
+            $artistId = (int) ($artistRow->artist_id ?? 0);
+            if ($trackId <= 0 || $artistId <= 0) {
+                continue;
+            }
+
+            if (! array_key_exists($trackId, $artistMap)) {
+                $artistMap[$trackId] = [];
+            }
+            $artistMap[$trackId][] = $artistId;
+        }
+
+        $genreMap = [];
+        foreach ($genreRows as $genreRow) {
+            $trackId = (int) ($genreRow->track_id ?? 0);
+            $genreId = (int) ($genreRow->genre_id ?? 0);
+            if ($trackId <= 0 || $genreId <= 0) {
+                continue;
+            }
+
+            if (! array_key_exists($trackId, $genreMap)) {
+                $genreMap[$trackId] = [];
+            }
+            $genreMap[$trackId][] = $genreId;
+        }
+
+        $lines = ['"id";"genre_id";"album_id";"track_title";"bpm_value";"artist_id";"artist_ids";"genre_ids";"release_date";"track_length";"track_price_eur";"track_cover";"track_path";"preview_start_at";"preview_end_at";"preview_path"'];
 
         foreach ($rows as $row) {
             $id = (int) $row->id;
-            $genreId = (int) ($row->genre_id ?? 0);
+            $genreIds = $genreMap[$id] ?? [];
+            $genreId = (int) (($genreIds[0] ?? null) ?: ($row->genre_id ?? 0));
             $albumId = (int) ($row->album_id ?? 0);
             $title = str_replace('"', '""', (string) ($row->track_title ?? ''));
             $bpm = (int) ($row->bpm_value ?? 0);
-            $artistId = (int) ($artistMap[$id] ?? 0);
+            $artistIds = $artistMap[$id] ?? [];
+            $artistId = (int) ($artistIds[0] ?? 0);
+            $artistIdsCsv = str_replace('"', '""', implode(',', $artistIds));
+            $genreIdsCsv = str_replace('"', '""', implode(',', $genreIds));
             $releaseDate = (string) ($row->release_date ?? '');
             if ($releaseDate !== '') {
                 $releaseDate = str_replace('-', '.', $releaseDate);
@@ -176,7 +215,7 @@ class Track extends Model
             $previewEnd = (int) ($row->preview_end_at ?? 30);
             $previewPath = str_replace('"', '""', (string) ($row->preview_path ?? ''));
 
-            $lines[] = "\"{$id}\";\"{$genreId}\";\"{$albumId}\";\"{$title}\";\"{$bpm}\";\"{$artistId}\";\"{$releaseDate}\";\"{$trackLength}\";\"{$trackPrice}\";\"{$trackCover}\";\"{$trackPath}\";\"{$previewStart}\";\"{$previewEnd}\";\"{$previewPath}\"";
+            $lines[] = "\"{$id}\";\"{$genreId}\";\"{$albumId}\";\"{$title}\";\"{$bpm}\";\"{$artistId}\";\"{$artistIdsCsv}\";\"{$genreIdsCsv}\";\"{$releaseDate}\";\"{$trackLength}\";\"{$trackPrice}\";\"{$trackCover}\";\"{$trackPath}\";\"{$previewStart}\";\"{$previewEnd}\";\"{$previewPath}\"";
         }
 
         $csvPath = database_path('csv/tracks.csv');
@@ -207,7 +246,7 @@ class Track extends Model
             'genre_id',
             'id',
             'genre_id'
-        );
+        )->using(TrackGenre::class);
     }
 
     public function artists(): BelongsToMany
@@ -219,6 +258,6 @@ class Track extends Model
             'artist_id',
             'id',
             'artist_id'
-        );
+        )->using(TrackArtist::class);
     }
 }
