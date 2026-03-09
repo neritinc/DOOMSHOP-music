@@ -148,12 +148,13 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
+        $releaseDate = $this->normalizeReleaseDate($data['release_date'] ?? null);
 
         $track = Track::query()->create([
             'genre_id' => $genreId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
-            'release_date' => $data['release_date'] ?? null,
+            'release_date' => $releaseDate,
             'track_length_sec' => $data['track_length_sec'] ?? null,
             'track_price_eur' => isset($data['track_price_eur']) ? round((float) $data['track_price_eur'], 2) : 1.99,
             'track_cover' => $coverPath,
@@ -246,12 +247,13 @@ class TrackController extends Controller
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
+        $releaseDate = $this->normalizeReleaseDate($data['release_date'] ?? null);
 
         $track->fill([
             'genre_id' => $genreId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
-            'release_date' => $data['release_date'] ?? null,
+            'release_date' => $releaseDate,
             'track_length_sec' => $data['track_length_sec'] ?? null,
             'track_price_eur' => isset($data['track_price_eur']) ? round((float) $data['track_price_eur'], 2) : ($track->track_price_eur ?? 1.99),
             'track_cover' => $coverPath,
@@ -594,6 +596,17 @@ class TrackController extends Controller
         }
 
         return null;
+    }
+
+    private function normalizeReleaseDate(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 
     private function isAdmin(Request $request): bool
@@ -985,4 +998,3 @@ class TrackController extends Controller
         }
     }
 }
-
