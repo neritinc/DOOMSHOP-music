@@ -971,16 +971,21 @@ export default {
       return "Validation error.";
     },
     async load() {
-      const [tracksRes, genresRes, artistsRes, albumsRes] = await Promise.all([
+      const [tracksRes, genresRes, artistsRes, albumsRes] = await Promise.allSettled([
         service.list(),
         genreService.list(),
         artistService.list(),
         albumService.list(),
       ]);
-      this.tracks = this.shuffleArray(tracksRes.data || []);
-      this.genres = genresRes.data || [];
-      this.artists = artistsRes.data || [];
-      this.albums = albumsRes.data || [];
+
+      this.tracks = tracksRes.status === "fulfilled" ? this.shuffleArray(tracksRes.value.data || []) : [];
+      this.genres = genresRes.status === "fulfilled" ? (genresRes.value.data || []) : [];
+      this.artists = artistsRes.status === "fulfilled" ? (artistsRes.value.data || []) : [];
+      this.albums = albumsRes.status === "fulfilled" ? (albumsRes.value.data || []) : [];
+
+      if (tracksRes.status !== "fulfilled") {
+        throw tracksRes.reason;
+      }
     },
     async createTrack() {
       this.formError = "";
