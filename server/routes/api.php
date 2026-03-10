@@ -84,6 +84,8 @@ Route::post('tracks/{id}/regenerate-preview', [TrackController::class, 'regenera
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::patch('tracks/{id}', [TrackController::class, 'update'])
     ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('tracks/{id}', [TrackController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 
 //region Genres

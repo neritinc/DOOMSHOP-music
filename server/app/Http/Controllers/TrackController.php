@@ -12,6 +12,7 @@ use App\Models\Track;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use FFMpeg\FFProbe;
 use Symfony\Component\Process\Process;
@@ -145,7 +146,9 @@ class TrackController extends Controller
 
         $trackPath = $data['track_path'] ?? null;
         if ($request->hasFile('track_audio')) {
-            $trackPath = $request->file('track_audio')->store('tracks', 'public');
+            /** @var UploadedFile $audioFile */
+            $audioFile = $request->file('track_audio');
+            $trackPath = $this->storeUploadedAudioFile($audioFile);
         }
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
@@ -245,7 +248,9 @@ class TrackController extends Controller
         $trackPath = $data['track_path'] ?? $track->track_path;
         $audioReplaced = false;
         if ($request->hasFile('track_audio')) {
-            $trackPath = $request->file('track_audio')->store('tracks', 'public');
+            /** @var UploadedFile $audioFile */
+            $audioFile = $request->file('track_audio');
+            $trackPath = $this->storeUploadedAudioFile($audioFile);
             $audioReplaced = true;
         }
 
@@ -484,6 +489,35 @@ class TrackController extends Controller
         ]);
     }
 
+    public function destroy(int $id): JsonResponse
+    {
+        $track = Track::query()->find($id);
+        if (! $track) {
+            return response()->json([
+                'message' => "Track not found: {$id}",
+                'data' => null,
+            ], 404);
+        }
+
+        $trackPath = (string) ($track->track_path ?? '');
+        $coverPath = (string) ($track->track_cover ?? '');
+
+        $track->delete();
+
+        if ($trackPath !== '' && Storage::disk('public')->exists($trackPath)) {
+            Storage::disk('public')->delete($trackPath);
+        }
+
+        if ($coverPath !== '' && Storage::disk('public')->exists($coverPath)) {
+            Storage::disk('public')->delete($coverPath);
+        }
+
+        return response()->json([
+            'message' => 'Track deleted successfully',
+            'data' => null,
+        ]);
+    }
+
     private function streamAudioFile(Request $request, string $fullPath, ?string $downloadName = null): JsonResponse|StreamedResponse
     {
         $fileSize = filesize($fullPath);
@@ -569,6 +603,36 @@ class TrackController extends Controller
         }
 
         return $base . '.' . $ext;
+    }
+
+    private function storeUploadedAudioFile(UploadedFile $file): string
+    {
+        $originalName = pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME);
+        $baseName = trim((string) $originalName);
+        if ($baseName === '') {
+            $baseName = 'track';
+        }
+
+        $safeBase = Str::slug($baseName, '_');
+        if ($safeBase === '') {
+            $safeBase = 'track';
+        }
+
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        if ($extension === '') {
+            $extension = strtolower((string) $file->extension());
+        }
+        if ($extension === '') {
+            $extension = 'mp3';
+        }
+        $extension = preg_replace('/[^a-z0-9]+/', '', $extension) ?? 'mp3';
+        if ($extension === '') {
+            $extension = 'mp3';
+        }
+
+        $fileName = $safeBase . '_' . Str::lower(Str::random(8)) . '.' . $extension;
+
+        return $file->storeAs('tracks', $fileName, 'public');
     }
 
     private function resolveTrackSourcePath(string $trackPath): ?string

@@ -33,6 +33,9 @@ export default {
     }
     return apiClient.patch(`${route}/${id}`, payload);
   },
+  destroy(id) {
+    return apiClient.delete(`${route}/${id}`);
+  },
   regeneratePreview(id, payload) {
     return apiClient.post(`${route}/${id}/regenerate-preview`, payload);
   },

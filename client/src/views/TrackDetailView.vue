@@ -162,8 +162,39 @@
           </div>
 
           <button class="btn btn-primary btn-sm mt-3 align-self-start" :disabled="saving">{{ saving ? "Saving..." : "Save changes" }}</button>
+          <button class="btn btn-danger btn-sm mt-2 align-self-start" type="button" :disabled="deleting" @click="deleteTrack">
+            {{ deleting ? "Deleting..." : "Delete track" }}
+          </button>
           <audio ref="previewAudioRef" :src="audioPreviewUrl" preload="auto" class="d-none" @ended="stopPreviewSegment" @timeupdate="onPreviewTimeUpdate"></audio>
         </form>
+      </div>
+    </div>
+
+    <div v-if="showDeleteModal" class="modal-backdrop-custom" @click.self="cancelDelete">
+      <div class="delete-modal card shadow">
+        <div class="card-body">
+          <h3 class="h5 mb-2">Delete track?</h3>
+          <p class="mb-2">
+            You are about to delete: <strong>{{ track?.track_title || "this track" }}</strong>
+          </p>
+          <p class="mb-2">This action will remove:</p>
+          <ul class="mb-3">
+            <li>Track record from database</li>
+            <li>Source audio file from storage</li>
+            <li>Cover image from storage</li>
+            <li>Generated preview file and CSV exports</li>
+          </ul>
+          <p class="text-danger mb-3">This cannot be undone.</p>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-outline-secondary btn-sm" type="button" :disabled="deleting" @click="cancelDelete">
+              Cancel
+            </button>
+            <button class="btn btn-danger btn-sm" type="button" :disabled="deleting" @click="confirmDeleteTrack">
+              {{ deleting ? "Deleting..." : "Yes, delete" }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -206,6 +237,8 @@ export default {
       albums: [],
       edit: emptyEdit(),
       saving: false,
+      deleting: false,
+      showDeleteModal: false,
       editError: "",
       editSuccess: "",
       audioFile: null,
@@ -578,6 +611,33 @@ export default {
         this.saving = false;
       }
     },
+    async deleteTrack() {
+      if (!this.isAdmin || !this.track || this.deleting) return;
+      this.showDeleteModal = true;
+    },
+    cancelDelete() {
+      if (this.deleting) return;
+      this.showDeleteModal = false;
+    },
+    async confirmDeleteTrack() {
+      if (!this.isAdmin || !this.track) return;
+      const id = this.trackId(this.track);
+      if (!id) return;
+
+      this.deleting = true;
+      this.editError = "";
+      this.editSuccess = "";
+
+      try {
+        await service.destroy(id);
+        this.showDeleteModal = false;
+        this.$router.push("/tracks");
+      } catch (err) {
+        this.editError = err?.response?.data?.message || "Delete failed.";
+      } finally {
+        this.deleting = false;
+      }
+    },
   },
   async mounted() {
     await this.load();
@@ -734,6 +794,23 @@ export default {
   max-height: 160px;
   object-fit: cover;
   border-radius: 10px;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.delete-modal {
+  width: min(560px, 96vw);
+  border: 1px solid #fecaca;
+  border-radius: 14px;
 }
 
 @media (max-width: 992px) {
