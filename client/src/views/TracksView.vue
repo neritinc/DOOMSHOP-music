@@ -345,21 +345,17 @@
 
     <div class="row g-3">
       <div class="col-sm-6 col-lg-4 col-xl-3" v-for="t in filteredTracks" :key="trackId(t)">
-        <div class="card h-100 shadow-sm track-card">
+        <RouterLink class="track-card-link" :to="`/tracks/${trackId(t)}`">
+          <div class="card h-100 shadow-sm track-card">
           <img class="card-img-top track-cover" :src="coverUrl(t.track_cover)" :alt="t.track_title" @error="onImgError" />
 
           <div class="card-body d-flex flex-column track-meta">
             <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
             <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
             <p class="mb-2 track-artist">Price: {{ formatPrice(t.track_price_eur) }}</p>
-
-            <div class="mt-auto">
-              <RouterLink class="btn btn-sm btn-outline-secondary mt-2" :to="`/tracks/${trackId(t)}`">
-                Open details
-              </RouterLink>
-            </div>
           </div>
-        </div>
+          </div>
+        </RouterLink>
       </div>
     </div>
   </div>
@@ -501,6 +497,14 @@ export default {
       this.selectedGenreFilter = "";
       this.selectedArtistFilter = "";
       this.selectedBpmFilter = "";
+    },
+    applyGenreFromRouteQuery() {
+      const queryGenre = String(this.$route?.query?.genre || "").trim();
+      if (!queryGenre) return;
+
+      const target = queryGenre.toLowerCase();
+      const matched = (this.genres || []).find((g) => String(g.genre_name || "").trim().toLowerCase() === target);
+      this.selectedGenreFilter = matched?.genre_name || queryGenre;
     },
     scrollToSection(section) {
       const map = {
@@ -1078,8 +1082,14 @@ export default {
       }
     },
   },
+  watch: {
+    "$route.query.genre"() {
+      this.applyGenreFromRouteQuery();
+    },
+  },
   async mounted() {
     await this.load();
+    this.applyGenreFromRouteQuery();
   },
   beforeUnmount() {
     this.stopPreviewSegment();
@@ -1262,12 +1272,19 @@ export default {
   object-fit: cover;
 }
 
+.track-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .track-card {
   background: #ffffff;
   border: 1px solid #d9e3f1;
   border-radius: 14px;
   box-shadow: 0 8px 20px rgba(20, 37, 63, 0.06);
   transition: transform 0.16s ease, box-shadow 0.16s ease;
+  overflow: hidden;
 }
 
 .track-card:hover {
@@ -1283,11 +1300,21 @@ export default {
   font-size: 1.2rem;
   line-height: 1.1;
   letter-spacing: 0.01em;
+  min-height: 2.65rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .track-artist {
   color: #4b5563;
   font-weight: 600;
+  min-height: 1.55rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .preview-seek-wrap {

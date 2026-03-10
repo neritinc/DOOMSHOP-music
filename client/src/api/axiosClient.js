@@ -16,6 +16,9 @@ const apiClient = axios.create({
 // Lefut minden egyes kérés előtt
 apiClient.interceptors.request.use(
   (config) => {
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     const token = useUserLoginLogoutStore().token; // Vagy a Pinia store-ból
     // const token = "";
     if (token) {
@@ -82,3 +85,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+

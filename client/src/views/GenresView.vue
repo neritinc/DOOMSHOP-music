@@ -8,12 +8,14 @@
 
     <div class="row g-3">
       <div v-for="g in items" :key="g.genre_id" class="col-sm-6 col-lg-4 col-xl-3">
-        <div class="card h-100 shadow-sm genre-card">
-          <div class="card-body genre-meta">
-            <h3 class="genre-name">{{ g.genre_name }}</h3>
-            <p v-if="isAdmin" class="genre-extra mb-0">ID: {{ g.genre_id }}</p>
+        <RouterLink class="genre-card-link" :to="{ path: '/tracks', query: { genre: g.genre_name } }">
+          <div class="card h-100 shadow-sm genre-card">
+            <div class="card-body genre-meta">
+              <h3 class="genre-name">{{ g.genre_name }}</h3>
+              <p v-if="isAdmin" class="genre-extra mb-0">ID: {{ g.genre_id }}</p>
+            </div>
           </div>
-        </div>
+        </RouterLink>
       </div>
     </div>
   </div>
@@ -23,8 +25,10 @@
 import service from "@/api/genreService";
 import { mapState } from "pinia";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
+import { RouterLink } from "vue-router";
 
 export default {
+  components: { RouterLink },
   data() {
     return { items: [], name: "" };
   },
@@ -50,9 +54,21 @@ export default {
 </script>
 
 <style scoped>
+.genre-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .genre-card {
   border: 1px solid #d9dee5;
   background: #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.genre-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(20, 37, 63, 0.12) !important;
 }
 
 .genre-meta {

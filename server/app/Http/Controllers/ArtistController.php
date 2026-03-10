@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Artist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ArtistController extends Controller
 {
@@ -19,6 +20,7 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'artist_name' => 'required|string|max:255',
             'artist_picture' => 'nullable|string|max:255',
+            'artist_picture_file' => 'nullable|image|max:5120',
         ]);
 
         $exists = Artist::query()
@@ -32,6 +34,9 @@ class ArtistController extends Controller
         }
 
         $validated['artist_name'] = $normalizedArtistName;
+        if ($request->hasFile('artist_picture_file')) {
+            $validated['artist_picture'] = $request->file('artist_picture_file')->store('artists', 'public');
+        }
         $artist = Artist::create($validated);
         return response()->json(['message' => 'Artist created', 'data' => $artist], 201);
     }
@@ -56,6 +61,7 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'artist_name' => 'required|string|max:255',
             'artist_picture' => 'nullable|string|max:255',
+            'artist_picture_file' => 'nullable|image|max:5120',
         ]);
 
         $exists = Artist::query()
@@ -70,6 +76,13 @@ class ArtistController extends Controller
         }
 
         $validated['artist_name'] = $normalizedArtistName;
+        if ($request->hasFile('artist_picture_file')) {
+            $old = (string) ($artist->artist_picture ?? '');
+            $validated['artist_picture'] = $request->file('artist_picture_file')->store('artists', 'public');
+            if ($old !== '' && ! str_starts_with($old, 'http://') && ! str_starts_with($old, 'https://') && Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+        }
         $artist->update($validated);
         return response()->json(['message' => 'Artist updated', 'data' => $artist]);
     }

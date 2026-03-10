@@ -13,6 +13,9 @@ export default {
   myCartItems() {
     return apiClient.get("/my-cart-items");
   },
+  deleteMyCartItem(id) {
+    return apiClient.delete(`/my-cart-items/${id}`);
+  },
   allCarts() {
     return apiClient.get("/carts");
   },
