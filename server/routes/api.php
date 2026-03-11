@@ -76,6 +76,12 @@ Route::get('tracks', [TrackController::class, 'index']);
 Route::get('tracks/{id}/preview', [TrackController::class, 'preview'])->whereNumber('id');
 Route::get('tracks/{id}/source', [TrackController::class, 'source'])->whereNumber('id');
 Route::get('tracks/{id}', [TrackController::class, 'show'])->whereNumber('id');
+Route::get('tracks/analyze-upload', function () {
+    return response()->json([
+        'message' => 'Use POST for analyze-upload.',
+        'data' => null,
+    ], 405);
+});
 Route::post('tracks/analyze-upload', [TrackController::class, 'analyzeUpload'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks', [TrackController::class, 'store'])

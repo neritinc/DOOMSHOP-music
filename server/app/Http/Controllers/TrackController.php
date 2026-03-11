@@ -22,6 +22,47 @@ class TrackController extends Controller
 {
     public function analyzeUpload(Request $request): JsonResponse
     {
+        $errorMap = [
+            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds upload_max_filesize.',
+            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds MAX_FILE_SIZE.',
+            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder.',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
+        ];
+
+        $rawFile = $request->file('track_audio');
+        if ($rawFile instanceof UploadedFile && ! $rawFile->isValid()) {
+            $code = $rawFile->getError();
+            return response()->json([
+                'message' => 'The track audio failed to upload.',
+                'data' => [
+                    'upload_error_code' => $code,
+                    'upload_error' => $errorMap[$code] ?? 'Unknown upload error.',
+                    'post_max_size' => ini_get('post_max_size'),
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+                ],
+            ], 422);
+        }
+
+        if (! $rawFile && isset($_FILES['track_audio'])) {
+            $code = (int) ($_FILES['track_audio']['error'] ?? -1);
+            if ($code !== UPLOAD_ERR_OK) {
+                return response()->json([
+                    'message' => 'The track audio failed to upload.',
+                    'data' => [
+                        'upload_error_code' => $code,
+                        'upload_error' => $errorMap[$code] ?? 'Unknown upload error.',
+                        'post_max_size' => ini_get('post_max_size'),
+                        'upload_max_filesize' => ini_get('upload_max_filesize'),
+                        'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+                    ],
+                ], 422);
+            }
+        }
+
         $validated = $request->validate([
             'track_audio' => 'required|file|max:1048576',
         ]);
