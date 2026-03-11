@@ -33,7 +33,7 @@ class StoreTrackRequest extends FormRequest
             'track_cover' => 'nullable|string|max:255',
             'track_cover_file' => 'nullable|image|max:5120',
             'track_path' => 'nullable|string|max:255|required_without:track_audio',
-            'track_audio' => 'nullable|file|required_without:track_path|max:51200',
+            'track_audio' => 'nullable|file|required_without:track_path|max:262144',
             'preview_start_at' => 'nullable|integer|min:0',
             'preview_end_at' => 'nullable|integer|gt:preview_start_at',
             'artist_ids' => 'nullable|array',

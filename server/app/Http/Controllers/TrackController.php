@@ -23,7 +23,7 @@ class TrackController extends Controller
     public function analyzeUpload(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'track_audio' => 'required|file|max:51200',
+            'track_audio' => 'required|file|max:262144',
         ]);
 
         /** @var UploadedFile $file */
