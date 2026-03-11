@@ -33,7 +33,7 @@ class UpdateTrackRequest extends FormRequest
             'track_cover' => 'nullable|string|max:255',
             'track_cover_file' => 'nullable|image|max:5120',
             'track_path' => 'nullable|string|max:255',
-            'track_audio' => 'nullable|file|max:262144',
+            'track_audio' => 'nullable|file|max:1048576',
             'preview_start_at' => 'required|integer|min:0',
             'preview_end_at' => 'required|integer|gt:preview_start_at',
             'artist_ids' => 'nullable|array',
