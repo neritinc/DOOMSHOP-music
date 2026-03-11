@@ -73,18 +73,21 @@ Route::delete('users/{id}', [UserController::class, 'destroy'])
 
 //region Tracks
 Route::get('tracks', [TrackController::class, 'index']);
-Route::get('tracks/{id}/preview', [TrackController::class, 'preview']);
-Route::get('tracks/{id}/source', [TrackController::class, 'source']);
-Route::get('tracks/{id}', [TrackController::class, 'show']);
+Route::get('tracks/{id}/preview', [TrackController::class, 'preview'])->whereNumber('id');
+Route::get('tracks/{id}/source', [TrackController::class, 'source'])->whereNumber('id');
+Route::get('tracks/{id}', [TrackController::class, 'show'])->whereNumber('id');
 Route::post('tracks/analyze-upload', [TrackController::class, 'analyzeUpload'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks', [TrackController::class, 'store'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks/{id}/regenerate-preview', [TrackController::class, 'regeneratePreview'])
+    ->whereNumber('id')
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::patch('tracks/{id}', [TrackController::class, 'update'])
+    ->whereNumber('id')
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::delete('tracks/{id}', [TrackController::class, 'destroy'])
+    ->whereNumber('id')
     ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 
