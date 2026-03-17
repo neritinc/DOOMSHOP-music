@@ -60,6 +60,7 @@
           <div class="col-lg-6">
             <label class="form-label mb-1">Track title</label>
             <input v-model="form.track_title" class="form-control" placeholder="Track title" required />
+            <small v-if="firstError(['track_title'])" class="text-danger">{{ firstError(['track_title']) }}</small>
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">BPM</label>
@@ -114,6 +115,9 @@
               <option v-for="genre in genres" :key="genre.genre_id" :value="genre.genre_name"></option>
             </datalist>
             <small class="text-muted d-block">Select existing genres or type new ones.</small>
+            <small v-if="firstError(['genre_name','genre_ids','genre_ids.0','genre_names','genre_names.0'])" class="text-danger d-block">
+              {{ firstError(['genre_name','genre_ids','genre_ids.0','genre_names','genre_names.0']) }}
+            </small>
             <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addGenreField">+ Add genre</button>
           </div>
 
@@ -139,6 +143,9 @@
               <option v-for="artist in artists" :key="artist.artist_id" :value="artist.artist_name"></option>
             </datalist>
             <small class="text-muted d-block">Select existing artists or type new ones.</small>
+            <small v-if="firstError(['artist_names','artist_ids','artist_ids.0','artist_names.0'])" class="text-danger d-block">
+              {{ firstError(['artist_names','artist_ids','artist_ids.0','artist_names.0']) }}
+            </small>
             <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addArtistField">+ Add artist</button>
           </div>
         </div>
@@ -186,6 +193,7 @@
               @input="onPreviewEndInput"
             />
             <small class="text-muted">Format: {{ formatTime(form.preview_end_at) }}</small>
+            <small v-if="firstError(['preview_end_at'])" class="text-danger d-block">{{ firstError(['preview_end_at']) }}</small>
           </div>
         </div>
 
@@ -281,6 +289,7 @@
               required
             />
             <small class="text-muted">Supported: mp3, wav, ogg, m4a, flac (max 50 MB)</small>
+            <small v-if="firstError(['track_audio'])" class="text-danger d-block">{{ firstError(['track_audio']) }}</small>
             <small v-if="analyzing" class="d-block text-primary mt-1">Analyzing audio metadata...</small>
           </div>
 
@@ -311,6 +320,7 @@
                 <small class="text-muted">JPG, PNG, WEBP - max 5 MB</small>
               </template>
             </div>
+            <small v-if="firstError(['track_cover_file'])" class="text-danger d-block">{{ firstError(['track_cover_file']) }}</small>
           </div>
         </div>
       </div>
@@ -398,6 +408,7 @@ export default {
       submitting: false,
       analyzing: false,
       formError: "",
+      validationErrors: {},
       audioFile: null,
       coverFile: null,
       coverPreviewUrl: "",
@@ -821,6 +832,7 @@ export default {
     },
     async analyzeAudioFile(file) {
       this.analyzing = true;
+      this.clearValidationErrors();
       try {
         const res = await service.analyzeUpload(file);
         const analyzed = res?.data && typeof res.data === "object" ? res.data : (res || {});
@@ -840,6 +852,7 @@ export default {
         }
         this.normalizePreviewWindow();
       } catch (err) {
+        this.setValidationErrorsFromResponse(err);
         this.formError = err?.response?.data?.message || "Audio analyze failed, fallback from filename used.";
       } finally {
         this.analyzing = false;
@@ -962,6 +975,13 @@ export default {
       this.formError = "";
       this.setCoverFile(file);
     },
+    firstError(keys) {
+      const list = Array.isArray(keys) ? keys : [keys];
+      for (const key of list) {
+        if (this.validationErrors?.[key]) return this.validationErrors[key];
+      }
+      return "";
+    },
     toValidationError(err) {
       const errors = err?.response?.data?.errors;
       if (!errors || typeof errors !== "object") {
@@ -973,6 +993,31 @@ export default {
       const firstValue = errors[firstKey];
       if (Array.isArray(firstValue) && firstValue.length > 0) return firstValue[0];
       return "Validation error.";
+    },
+    clearValidationErrors() {
+      this.validationErrors = {};
+    },
+    setValidationErrorsFromResponse(err) {
+      const errors = err?.response?.data?.errors;
+      if (errors && typeof errors === "object") {
+        const mapped = {};
+        Object.entries(errors).forEach(([key, value]) => {
+          if (Array.isArray(value) && value.length > 0) {
+            mapped[key] = value[0];
+          } else if (typeof value === "string") {
+            mapped[key] = value;
+          }
+        });
+        this.validationErrors = mapped;
+      }
+
+      const uploadError = err?.response?.data?.data?.upload_error;
+      if (uploadError) {
+        this.validationErrors = {
+          ...this.validationErrors,
+          track_audio: uploadError,
+        };
+      }
     },
     async load() {
       const [tracksRes, genresRes, artistsRes, albumsRes] = await Promise.allSettled([
@@ -993,6 +1038,7 @@ export default {
     },
     async createTrack() {
       this.formError = "";
+      this.clearValidationErrors();
       this.normalizePreviewWindow();
       this.stopPreviewSegment();
 
@@ -1066,6 +1112,7 @@ export default {
 
         await service.create(payload);
         this.form = initialForm();
+        this.clearValidationErrors();
         this.audioFile = null;
         this.stopFullTrack();
         if (this.audioPreviewUrl) {
@@ -1076,6 +1123,7 @@ export default {
         this.setCoverFile(null);
         await this.load();
       } catch (err) {
+        this.setValidationErrorsFromResponse(err);
         this.formError = this.toValidationError(err);
       } finally {
         this.submitting = false;
