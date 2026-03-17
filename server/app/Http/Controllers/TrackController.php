@@ -278,6 +278,8 @@ class TrackController extends Controller
         $oldCoverPath = (string) ($track->track_cover ?? '');
         $oldTrackPath = (string) ($track->track_path ?? '');
         $oldPreviewPath = (string) ($track->preview_path ?? '');
+        $oldPreviewStart = (int) ($track->preview_start_at ?? 0);
+        $oldPreviewEnd = (int) ($track->preview_end_at ?? 0);
 
         $coverPath = $data['track_cover'] ?? $track->track_cover;
         $coverReplaced = false;
@@ -338,7 +340,10 @@ class TrackController extends Controller
             $track->genres()->sync($genreIds);
         }
 
-        if (! empty($trackPath) && ($previewEnd - $previewStart) > 0) {
+        $previewChanged = $previewStart !== $oldPreviewStart || $previewEnd !== $oldPreviewEnd;
+        $shouldRegeneratePreview = ($audioReplaced || $previewChanged) && ! empty($trackPath) && ($previewEnd - $previewStart) > 0;
+
+        if ($shouldRegeneratePreview) {
             (new GenerateTrackPreview($track))->handle();
             $track->refresh();
 

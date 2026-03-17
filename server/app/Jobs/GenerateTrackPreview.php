@@ -49,6 +49,16 @@ class GenerateTrackPreview implements ShouldQueue
         try {
             $config = $this->ffmpegConfig();
             $ffmpegBinary = (string) ($config['ffmpeg.binaries'] ?? 'ffmpeg');
+            $tempDir = storage_path('app/tmp');
+            if (! is_dir($tempDir)) {
+                @mkdir($tempDir, 0775, true);
+            }
+            if (is_dir($tempDir) && is_writable($tempDir)) {
+                @ini_set('sys_temp_dir', $tempDir);
+                @putenv('TMP=' . $tempDir);
+                @putenv('TEMP=' . $tempDir);
+                @putenv('TMPDIR=' . $tempDir);
+            }
 
             $process = new Process([
                 $ffmpegBinary,
@@ -69,6 +79,11 @@ class GenerateTrackPreview implements ShouldQueue
                 '192k',
                 $outputPath,
             ]);
+            $process->setEnv(array_merge($_ENV, $_SERVER, [
+                'TEMP' => $tempDir,
+                'TMP' => $tempDir,
+                'TMPDIR' => $tempDir,
+            ]));
             $process->setTimeout(120);
             $process->run();
 
@@ -219,4 +234,3 @@ class GenerateTrackPreview implements ShouldQueue
         return null;
     }
 }
-

@@ -396,6 +396,10 @@ const initialForm = () => ({
   preview_end_at: 30,
 });
 
+const toClean = (value) => String(value || "").trim();
+const toCleanLower = (value) => toClean(value).toLowerCase();
+const normalizeList = (list) => (list || []).map((x) => toClean(x)).filter(Boolean);
+
 export default {
   components: { RouterLink },
   data() {
@@ -431,19 +435,19 @@ export default {
     ...mapState(useUserLoginLogoutStore, ["isAdmin"]),
     ...mapState(useSearchStore, ["searchWord"]),
     filteredTracks() {
-      const word = (this.searchWord || "").toLowerCase().trim();
+      const word = toCleanLower(this.searchWord);
       return this.tracks.filter((t) => {
-        const genreFilter = String(this.selectedGenreFilter || "").trim().toLowerCase();
+        const genreFilter = toCleanLower(this.selectedGenreFilter);
         if (genreFilter) {
           const hasGenre =
-            String(t.genre?.genre_name || "").trim().toLowerCase() === genreFilter
-            || (t.genres || []).some((g) => String(g?.genre_name || "").trim().toLowerCase() === genreFilter);
+            toCleanLower(t.genre?.genre_name) === genreFilter
+            || (t.genres || []).some((g) => toCleanLower(g?.genre_name) === genreFilter);
           if (!hasGenre) return false;
         }
 
-        const artistFilter = String(this.selectedArtistFilter || "").trim().toLowerCase();
+        const artistFilter = toCleanLower(this.selectedArtistFilter);
         if (artistFilter) {
-          const hasArtist = (t.artists || []).some((a) => String(a?.artist_name || "").trim().toLowerCase() === artistFilter);
+          const hasArtist = (t.artists || []).some((a) => toCleanLower(a?.artist_name) === artistFilter);
           if (!hasArtist) return false;
         }
 
@@ -452,7 +456,7 @@ export default {
           return false;
         }
 
-        if (!word) return true;
+      if (!word) return true;
         const hay = [
           t.track_title,
           t.genre?.genre_name,
@@ -510,11 +514,11 @@ export default {
       this.selectedBpmFilter = "";
     },
     applyGenreFromRouteQuery() {
-      const queryGenre = String(this.$route?.query?.genre || "").trim();
+      const queryGenre = toClean(this.$route?.query?.genre);
       if (!queryGenre) return;
 
       const target = queryGenre.toLowerCase();
-      const matched = (this.genres || []).find((g) => String(g.genre_name || "").trim().toLowerCase() === target);
+      const matched = (this.genres || []).find((g) => toCleanLower(g.genre_name) === target);
       this.selectedGenreFilter = matched?.genre_name || queryGenre;
     },
     scrollToSection(section) {
@@ -554,25 +558,25 @@ export default {
       if (!data || typeof data !== "object") return;
 
       if (data.track_title && !this.form.track_title) {
-        this.form.track_title = data.track_title;
+        this.form.track_title = toClean(data.track_title);
       }
 
       if (data.genre_name) {
-        const hasExistingGenres = this.form.genre_names.some((name) => String(name || "").trim() !== "");
+        const hasExistingGenres = this.form.genre_names.some((name) => toClean(name) !== "");
         if (!hasExistingGenres) {
-          this.form.genre_names = [data.genre_name];
+          this.form.genre_names = [toClean(data.genre_name)];
         }
       }
 
       if (Array.isArray(data.artist_names) && data.artist_names.length > 0) {
-        const hasExistingArtists = this.form.artist_names.some((name) => String(name || "").trim() !== "");
+        const hasExistingArtists = this.form.artist_names.some((name) => toClean(name) !== "");
         if (!hasExistingArtists) {
-          this.form.artist_names = data.artist_names;
+          this.form.artist_names = data.artist_names.map((name) => toClean(name));
         }
       }
 
       if (data.release_date && !this.form.release_date) {
-        this.form.release_date = data.release_date;
+        this.form.release_date = toClean(data.release_date);
       }
 
       if (data.track_length_sec) {
@@ -1047,9 +1051,7 @@ export default {
         return;
       }
 
-      const artistNames = (this.form.artist_names || [])
-        .map((x) => String(x || "").trim())
-        .filter(Boolean);
+      const artistNames = normalizeList(this.form.artist_names);
 
       if (artistNames.length === 0) {
         this.formError = "At least one artist is required.";
@@ -1071,9 +1073,7 @@ export default {
           payload.append("album_title", String(this.form.album_title).trim());
         }
 
-        const genreNames = (this.form.genre_names || [])
-          .map((x) => String(x || "").trim())
-          .filter(Boolean);
+        const genreNames = normalizeList(this.form.genre_names);
         if (genreNames.length === 0) {
           this.formError = "At least one genre is required.";
           this.submitting = false;
@@ -1081,7 +1081,7 @@ export default {
         }
 
         const existingByName = new Map(
-          (this.genres || []).map((g) => [String(g.genre_name || "").trim().toLowerCase(), g])
+          (this.genres || []).map((g) => [toCleanLower(g.genre_name), g])
         );
 
         const genreIds = [];
