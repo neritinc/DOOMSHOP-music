@@ -36,11 +36,20 @@
       </div>
 
       <div class="ticker" aria-hidden="true">
-        <span>TRACK PREVIEWS</span>
-        <span>ARTIST MANAGEMENT</span>
-        <span>GENRE ROUTING</span>
-        <span>CART FLOW</span>
-        <span>TRACK PREVIEWS</span>
+        <div class="ticker-track">
+          <span>TRACK PREVIEWS</span>
+          <span>ARTIST MANAGEMENT</span>
+          <span>GENRE ROUTING</span>
+          <span>CART FLOW</span>
+          <span>TRACK PREVIEWS</span>
+        </div>
+        <div class="ticker-track" aria-hidden="true">
+          <span>TRACK PREVIEWS</span>
+          <span>ARTIST MANAGEMENT</span>
+          <span>GENRE ROUTING</span>
+          <span>CART FLOW</span>
+          <span>TRACK PREVIEWS</span>
+        </div>
       </div>
     </section>
 
@@ -293,11 +302,19 @@ export default {};
 .ticker {
   margin-top: 0.95rem;
   display: flex;
+  align-items: center;
   gap: 1.4rem;
   overflow: hidden;
   white-space: nowrap;
   border-top: 1px solid rgba(186, 226, 255, 0.25);
   padding-top: 0.7rem;
+}
+
+.ticker-track {
+  display: inline-flex;
+  gap: 1.4rem;
+  animation: tickerMove 28s linear infinite;
+  min-width: max-content;
 }
 
 .ticker span {
@@ -306,7 +323,6 @@ export default {};
   letter-spacing: 0.11em;
   color: #bae6fd;
   opacity: 0.9;
-  animation: tickerMove 9s linear infinite;
 }
 
 .panel-card {
@@ -490,7 +506,7 @@ export default {};
 
 @keyframes tickerMove {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-18px); }
+  100% { transform: translateX(-100%); }
 }
 
 @media (max-width: 767px) {
