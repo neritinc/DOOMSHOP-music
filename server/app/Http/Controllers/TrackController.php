@@ -668,10 +668,28 @@ class TrackController extends Controller
         if ($extension === '') {
             $extension = strtolower((string) $file->extension());
         }
-        if ($extension === '') {
-            $extension = 'mp3';
+        $extension = preg_replace('/[^a-z0-9]+/', '', $extension) ?? '';
+
+        // If extension is missing or generic, infer from MIME type.
+        if ($extension === '' || $extension === 'bin') {
+            $mime = strtolower((string) ($file->getMimeType() ?? ''));
+            $map = [
+                'audio/mpeg' => 'mp3',
+                'audio/mp3' => 'mp3',
+                'audio/wav' => 'wav',
+                'audio/x-wav' => 'wav',
+                'audio/ogg' => 'ogg',
+                'audio/opus' => 'ogg',
+                'audio/mp4' => 'm4a',
+                'audio/x-m4a' => 'm4a',
+                'audio/flac' => 'flac',
+                'audio/x-flac' => 'flac',
+            ];
+            if (isset($map[$mime])) {
+                $extension = $map[$mime];
+            }
         }
-        $extension = preg_replace('/[^a-z0-9]+/', '', $extension) ?? 'mp3';
+
         if ($extension === '') {
             $extension = 'mp3';
         }

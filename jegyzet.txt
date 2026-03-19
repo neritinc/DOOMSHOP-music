@@ -1,0 +1,59 @@
+role szerkesztés ha senki sincs bejelenkezve
+
+index.js
+
+
+genres kell, hogy legyen egy központi lista a műfajokról (név, id).
+Ezt sok track használja, nem kell minden tracknél ugyanazt a szöveget tárolni.
+
+track_genres kell, hogy egy track több műfajhoz is tartozhasson.
+Ez az ún. sok‑sok kapcsolat (many‑to‑many).
+Ebben csak két idegen kulcs van: track_id + genre_id.
+
+Ha csak egy genre lehetne trackenként, akkor elég lenne a tracks.genre_id és nem kellene track_genres.
+De mivel több genre is lehet, a kapcsolótábla kötelező.
+
+Tehát:
+
+egy genre több trackhez tartozik,
+egy track több genre‑hez tartozik,
+ezt csak kapcsolótáblával lehet normálisan tárolni.
+
+
+
+
+Röviden: nem, ha egy track több genre‑t is kaphat.
+Egy tábla csak 1 genre / track esetén elég.
+
+Miért?
+
+Ha egy táblában akarod, akkor két választásod van:
+
+1) tracks.genre_id mezővel
+
+Ez csak egy genre‑t tud.
+Ha 2 genre kell → nincs hova tenni.
+2) tracks.genre_names = "Techno, House" (szövegben tárolod)
+
+Ezt nem lehet normálisan szűrni, rendezni, összehasonlítani.
+Duplikáció, elgépelés, rossz teljesítmény.
+Nem “tiszta” adatbázis megoldás.
+A helyes megoldás:
+
+genres = műfajok listája
+track_genres = kapcsolat (egy trackhez több genre)
+Ez az egyetlen normál, skálázható, szabályos megoldás.
+Ha csak 1 genre kellene trackenként, akkor elég lenne egy tábla (tracks.genre_id).
+
+-----------------------------------------------------------------
+A .bin csak azt jelenti, hogy a fájl kiterjesztése 
+ismeretlen/általános. Nem kezeli a formátumot.
+
+
+A .bin itt nem “kell” semmire külön — csak annyit jelent, hogy a feltöltéskor nem sikerült rendes kiterjesztést kinyerni, ezért kapott általános .bin nevet. A fájl tartalma ugyanaz, csak a név rossz.
+
+Összefoglalva:
+TrackController.php
+
+nem funkció, csak fallback név
+a lejátszás a fájl tartalmától függ, nem a .bin‑től

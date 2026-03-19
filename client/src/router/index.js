@@ -41,19 +41,19 @@ const routes = [
     path: "/genres",
     name: "genres",
     component: () => import("../views/GenresView.vue"),
-    meta: { title: "Genres", breadcrumb: "Genres", roles: [1, 2] },
+    meta: { title: "Genres", breadcrumb: "Genres" },
   },
   {
     path: "/artists",
     name: "artists",
     component: () => import("../views/ArtistsView.vue"),
-    meta: { title: "Artists", breadcrumb: "Artists", roles: [1, 2] },
+    meta: { title: "Artists", breadcrumb: "Artists" },
   },
   {
     path: "/albums",
     name: "albums",
     component: () => import("../views/AlbumsView.vue"),
-    meta: { title: "Albums", breadcrumb: "Albums", roles: [1, 2] },
+    meta: { title: "Albums", breadcrumb: "Albums" },
   },
   {
     path: "/artists/:id/tracks",

@@ -362,6 +362,7 @@
           <div class="card-body d-flex flex-column track-meta">
             <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
             <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
+            <p class="mb-2 track-artist">Genres: {{ genreNames(t) }}</p>
             <p class="mb-2 track-artist">Price: {{ formatPrice(t.track_price_eur) }}</p>
           </div>
           </div>
@@ -589,6 +590,15 @@ export default {
     },
     artistNames(track) {
       return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
+    },
+    genreNames(track) {
+      const list = (track.genres || [])
+        .map((g) => g?.genre_name)
+        .filter((name) => String(name || "").trim() !== "");
+      if (list.length === 0 && track?.genre?.genre_name) {
+        list.push(track.genre.genre_name);
+      }
+      return list.length > 0 ? list.join(", ") : "-";
     },
     onImgError(e) {
       e.target.src = "https://placehold.co/600x340?text=No+Cover";

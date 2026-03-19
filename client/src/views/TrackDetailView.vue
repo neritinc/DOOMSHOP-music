@@ -11,7 +11,7 @@
 
         <div class="detail-facts">
           <div class="fact-row"><span class="fact-key">Artists</span><span class="fact-val">{{ artistNames(track) }}</span></div>
-          <div class="fact-row"><span class="fact-key">Genre</span><span class="fact-val">{{ track.genre?.genre_name || "-" }}</span></div>
+          <div class="fact-row"><span class="fact-key">Genres</span><span class="fact-val">{{ genreNames(track) }}</span></div>
           <div v-if="track.album?.id && track.album?.title" class="fact-row">
             <span class="fact-key">Album</span>
             <RouterLink class="fact-val album-link" :to="`/albums?album=${track.album.id}`">
@@ -327,6 +327,15 @@ export default {
     },
     artistNames(track) {
       return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
+    },
+    genreNames(track) {
+      const list = (track.genres || [])
+        .map((g) => g?.genre_name)
+        .filter((name) => String(name || "").trim() !== "");
+      if (list.length === 0 && track?.genre?.genre_name) {
+        list.push(track.genre.genre_name);
+      }
+      return list.length > 0 ? list.join(", ") : "-";
     },
     firstArtist(track) {
       return track?.artists?.[0]?.artist_name || "Artist";
