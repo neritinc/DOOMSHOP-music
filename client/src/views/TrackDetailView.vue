@@ -586,6 +586,8 @@ export default {
           albumService.list(),
         ]);
         this.track = trackRes.data || null;
+        console.log("track",this.track);
+        
         this.genres = genresRes.data || [];
         this.artists = artistsRes.data || [];
         this.albums = albumsRes.data || [];

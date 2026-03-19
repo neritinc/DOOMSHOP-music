@@ -102,3 +102,13 @@ git push
 Megjegyzesek:
 - `server/public/storage` symlink, nem kell gitbe.
 - Ha a media nagy, hasznalj Git LFS-t.
+
+
+
+# WAMP KONFIGURÁCIÓ
+php.ini
+```ini
+upload_max_filesize = 64M
+post_max_size = 64M
+memory_limit = 256M
+```
