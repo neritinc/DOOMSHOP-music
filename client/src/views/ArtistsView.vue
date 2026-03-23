@@ -29,6 +29,7 @@
       </div>
       <button class="btn btn-primary">Add artist</button>
     </form>
+    <div v-if="actionError" class="alert alert-danger py-2 mb-3">{{ actionError }}</div>
 
     <div class="row g-3">
       <div v-for="a in items" :key="a.artist_id" class="col-sm-6 col-lg-4 col-xl-3">
@@ -53,6 +54,14 @@
               @click="openUpdateModal(a)"
             >
               Update image
+            </button>
+            <button
+              type="button"
+              class="delete-artist-btn"
+              :disabled="deletingArtistId === a.artist_id"
+              @click="deleteArtist(a)"
+            >
+              {{ deletingArtistId === a.artist_id ? "Deleting..." : "Delete artist" }}
             </button>
           </div>
         </div>
@@ -130,6 +139,8 @@ export default {
       isDraggingUpdatePicture: false,
       updating: false,
       updateError: "",
+      deletingArtistId: null,
+      actionError: "",
     };
   },
   methods: {
@@ -159,6 +170,7 @@ export default {
     },
     async createOne() {
       if (!this.isAdmin) return;
+      this.actionError = "";
       const payload = new FormData();
       payload.append("artist_name", this.form.artist_name);
       if (this.form.artist_picture) payload.append("artist_picture", this.form.artist_picture);
@@ -168,6 +180,27 @@ export default {
       this.form = { artist_name: "", artist_picture: "" };
       this.setPictureFile(null);
       await this.load();
+    },
+    async deleteArtist(artist) {
+      if (!this.isAdmin || !artist?.artist_id) return;
+      const artistName = String(artist.artist_name || "").trim() || "this artist";
+      const confirmed = window.confirm(`Delete artist "${artistName}"?`);
+      if (!confirmed) return;
+
+      this.deletingArtistId = artist.artist_id;
+      this.actionError = "";
+
+      try {
+        await service.destroy(artist.artist_id);
+        await this.load();
+        if (this.updateArtist?.artist_id === artist.artist_id) {
+          this.closeUpdateModal();
+        }
+      } catch (err) {
+        this.actionError = err?.response?.data?.message || "Artist deletion failed.";
+      } finally {
+        this.deletingArtistId = null;
+      }
     },
     openPicturePicker() {
       this.$refs.artistPictureInputRef?.click();
@@ -363,6 +396,8 @@ export default {
 .artist-card-actions {
   padding: 0 0.85rem 0.95rem;
   display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -382,5 +417,28 @@ export default {
 .update-image-btn:hover {
   background: #eaf2ff;
   border-color: #9fbee8;
+}
+
+.delete-artist-btn {
+  width: min(210px, 100%);
+  border: 1px solid #f1b9b9;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff7f7 0%, #ffeaea 100%);
+  color: #b42318;
+  font-size: 0.83rem;
+  font-weight: 700;
+  padding: 0.46rem 0.72rem;
+  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.08);
+}
+
+.delete-artist-btn:hover:not(:disabled) {
+  background: #ffe2e2;
+  border-color: #e7a4a4;
+}
+
+.delete-artist-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

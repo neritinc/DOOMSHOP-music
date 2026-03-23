@@ -5,35 +5,122 @@
       <input v-model="name" class="form-control mb-2" placeholder="Genre name" required />
       <button class="btn btn-primary align-self-start">Add genre</button>
     </form>
+    <div v-if="actionError" class="alert alert-danger py-2 mb-3">{{ actionError }}</div>
 
     <div class="row g-3">
       <div v-for="g in items" :key="g.genre_id" class="col-sm-6 col-lg-4 col-xl-3">
-        <RouterLink class="genre-card-link" :to="{ path: '/tracks', query: { genre: g.genre_name } }">
-          <div class="card h-100 shadow-sm genre-card">
+        <div class="card h-100 shadow-sm genre-card">
+          <RouterLink
+            v-if="editingGenreId !== g.genre_id"
+            class="genre-card-link"
+            :to="{ path: '/tracks', query: { genre: g.genre_name } }"
+          >
             <div class="card-body genre-meta">
               <h3 class="genre-name">{{ g.genre_name }}</h3>
               <p v-if="isAdmin" class="genre-extra mb-0">ID: {{ g.genre_id }}</p>
             </div>
+          </RouterLink>
+
+          <div v-else class="card-body genre-meta">
+            <label class="form-label text-start w-100 mb-1 fw-semibold" :for="`genre-name-${g.genre_id}`">
+              Genre name
+            </label>
+            <input
+              :id="`genre-name-${g.genre_id}`"
+              v-model="editName"
+              class="form-control"
+              placeholder="Genre name"
+              maxlength="255"
+              @keyup.esc="cancelEdit"
+            />
+            <p class="genre-extra mt-2 mb-0 text-start">ID: {{ g.genre_id }}</p>
           </div>
-        </RouterLink>
+
+          <div v-if="isAdmin" class="genre-card-actions">
+            <template v-if="editingGenreId === g.genre_id">
+              <button
+                type="button"
+                class="genre-action-btn genre-save-btn"
+                :disabled="savingGenreId === g.genre_id"
+                @click="saveEdit(g)"
+              >
+                {{ savingGenreId === g.genre_id ? "Saving..." : "Save" }}
+              </button>
+              <button
+                type="button"
+                class="genre-action-btn genre-cancel-btn"
+                :disabled="savingGenreId === g.genre_id"
+                @click="cancelEdit"
+              >
+                Cancel
+              </button>
+            </template>
+
+            <template v-else>
+              <button
+                type="button"
+                class="genre-action-btn genre-edit-btn"
+                @click="startEdit(g)"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                class="genre-action-btn genre-delete-btn"
+                :disabled="deletingGenreId === g.genre_id"
+                @click="askDelete(g)"
+              >
+                {{ deletingGenreId === g.genre_id ? "Deleting..." : "Delete" }}
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
     </div>
+
+    <ConfirmModal
+      :isOpenConfirmModal="isDeleteModalOpen"
+      title="Genre torlese"
+      :message="deleteMessage"
+      cancel="Megse"
+      confirm="Torles"
+      @cancel="closeDeleteModal"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
 
 <script>
 import service from "@/api/genreService";
+import ConfirmModal from "@/components/Confirm/ConfirmModal.vue";
 import { mapState } from "pinia";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { RouterLink } from "vue-router";
 
 export default {
-  components: { RouterLink },
+  components: { ConfirmModal, RouterLink },
   data() {
-    return { items: [], name: "" };
+    return {
+      items: [],
+      name: "",
+      editName: "",
+      editingGenreId: null,
+      savingGenreId: null,
+      deletingGenreId: null,
+      isDeleteModalOpen: false,
+      genreToDelete: null,
+      actionError: "",
+    };
   },
   computed: {
     ...mapState(useUserLoginLogoutStore, ["isAdmin"]),
+    deleteMessage() {
+      const genreName = String(this.genreToDelete?.genre_name || "").trim();
+      if (!genreName) {
+        return "Biztosan torolni szeretned ezt a mufajt?";
+      }
+      return `Biztosan torolni szeretned ezt a mufajt: "${genreName}"?`;
+    },
   },
   methods: {
     async load() {
@@ -42,9 +129,82 @@ export default {
     },
     async createOne() {
       if (!this.isAdmin) return;
-      await service.create({ genre_name: this.name });
-      this.name = "";
-      await this.load();
+      this.actionError = "";
+      try {
+        await service.create({ genre_name: this.name });
+        this.name = "";
+        await this.load();
+      } catch (err) {
+        this.actionError = err?.response?.data?.message || "Genre creation failed.";
+      }
+    },
+    startEdit(genre) {
+      if (!this.isAdmin || !genre?.genre_id) return;
+      this.actionError = "";
+      this.editingGenreId = genre.genre_id;
+      this.editName = String(genre.genre_name || "");
+    },
+    cancelEdit() {
+      this.editingGenreId = null;
+      this.editName = "";
+      this.savingGenreId = null;
+    },
+    async saveEdit(genre) {
+      if (!this.isAdmin || !genre?.genre_id) return;
+
+      const nextName = String(this.editName || "").trim();
+      if (!nextName) {
+        this.actionError = "Genre name is required.";
+        return;
+      }
+
+      this.actionError = "";
+      this.savingGenreId = genre.genre_id;
+
+      try {
+        await service.update(genre.genre_id, { genre_name: nextName });
+        await this.load();
+        this.cancelEdit();
+      } catch (err) {
+        this.actionError = err?.response?.data?.message || "Genre update failed.";
+      } finally {
+        if (this.savingGenreId === genre.genre_id) {
+          this.savingGenreId = null;
+        }
+      }
+    },
+    askDelete(genre) {
+      if (!this.isAdmin || !genre?.genre_id) return;
+      this.actionError = "";
+      this.genreToDelete = genre;
+      this.isDeleteModalOpen = true;
+    },
+    closeDeleteModal() {
+      this.isDeleteModalOpen = false;
+      this.genreToDelete = null;
+    },
+    async confirmDelete() {
+      const genre = this.genreToDelete;
+      if (!this.isAdmin || !genre?.genre_id) {
+        this.closeDeleteModal();
+        return;
+      }
+
+      this.actionError = "";
+      this.deletingGenreId = genre.genre_id;
+
+      try {
+        await service.destroy(genre.genre_id);
+        if (this.editingGenreId === genre.genre_id) {
+          this.cancelEdit();
+        }
+        await this.load();
+        this.closeDeleteModal();
+      } catch (err) {
+        this.actionError = err?.response?.data?.message || "Genre deletion failed.";
+      } finally {
+        this.deletingGenreId = null;
+      }
     },
   },
   async mounted() {
@@ -64,6 +224,9 @@ export default {
   border: 1px solid #d9dee5;
   background: #ffffff;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .genre-card:hover {
@@ -92,5 +255,63 @@ export default {
   margin-top: 0.55rem;
   font-size: 0.82rem;
   color: #6b7280;
+}
+
+.genre-card-actions {
+  padding: 0 0.9rem 0.95rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.genre-action-btn {
+  min-width: 110px;
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  padding: 0.46rem 0.78rem;
+  line-height: 1.2;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.genre-action-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.genre-edit-btn,
+.genre-save-btn {
+  border: 1px solid #bfd2ee;
+  background: linear-gradient(180deg, #ffffff 0%, #f2f7ff 100%);
+  color: #334155;
+}
+
+.genre-edit-btn:hover,
+.genre-save-btn:hover {
+  background: #eaf2ff;
+  border-color: #9fbee8;
+}
+
+.genre-cancel-btn {
+  border: 1px solid #d5dae1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.genre-cancel-btn:hover {
+  background: #eef2f7;
+  border-color: #c8d0da;
+}
+
+.genre-delete-btn {
+  border: 1px solid #f1b9b9;
+  background: linear-gradient(180deg, #fff7f7 0%, #ffeaea 100%);
+  color: #b42318;
+}
+
+.genre-delete-btn:hover:not(:disabled) {
+  background: #ffe2e2;
+  border-color: #e7a4a4;
 }
 </style>

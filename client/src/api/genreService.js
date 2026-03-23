@@ -9,4 +9,10 @@ export default {
   create(payload) {
     return apiClient.post(route, payload);
   },
+  update(id, payload) {
+    return apiClient.patch(`${route}/${id}`, payload);
+  },
+  destroy(id) {
+    return apiClient.delete(`${route}/${id}`);
+  },
 };

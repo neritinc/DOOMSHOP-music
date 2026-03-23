@@ -16,4 +16,7 @@ export default {
     }
     return apiClient.patch(`${route}/${id}`, payload);
   },
+  destroy(id) {
+    return apiClient.delete(`${route}/${id}`);
+  },
 };
