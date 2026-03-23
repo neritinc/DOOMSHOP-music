@@ -221,17 +221,20 @@ export default {
 }
 
 .genre-card {
-  border: 1px solid #d9dee5;
-  background: #ffffff;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid #111111;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #111111 0%, #3a3a3a 100%);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .genre-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 22px rgba(20, 37, 63, 0.12) !important;
+  transform: translateY(-3px);
+  border-color: #5a5a5a;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28) !important;
 }
 
 .genre-meta {
@@ -239,22 +242,26 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 120px;
+  min-height: 132px;
+  padding: 1.2rem;
 }
 
 .genre-name {
   margin: 0;
-  font-size: 1.2rem;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  color: #1f2937;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  letter-spacing: 0.12em;
+  color: #ffffff;
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .genre-extra {
-  margin-top: 0.55rem;
-  font-size: 0.82rem;
-  color: #6b7280;
+  margin-top: 0.7rem;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.68);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .genre-card-actions {
@@ -272,7 +279,7 @@ export default {
   font-weight: 700;
   padding: 0.46rem 0.78rem;
   line-height: 1.2;
-  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, color 0.15s ease;
 }
 
 .genre-action-btn:disabled {
@@ -282,36 +289,37 @@ export default {
 
 .genre-edit-btn,
 .genre-save-btn {
-  border: 1px solid #bfd2ee;
-  background: linear-gradient(180deg, #ffffff 0%, #f2f7ff 100%);
-  color: #334155;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .genre-edit-btn:hover,
 .genre-save-btn:hover {
-  background: #eaf2ff;
-  border-color: #9fbee8;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .genre-cancel-btn {
-  border: 1px solid #d5dae1;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .genre-cancel-btn:hover {
-  background: #eef2f7;
-  border-color: #c8d0da;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .genre-delete-btn {
-  border: 1px solid #f1b9b9;
-  background: linear-gradient(180deg, #fff7f7 0%, #ffeaea 100%);
-  color: #b42318;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
 }
 
 .genre-delete-btn:hover:not(:disabled) {
-  background: #ffe2e2;
-  border-color: #e7a4a4;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #ffffff;
 }
 </style>

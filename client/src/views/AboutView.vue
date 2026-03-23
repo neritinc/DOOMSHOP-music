@@ -3,49 +3,32 @@
     <header class="about-hero">
       <div class="about-hero__content">
         <p class="about-eyebrow">DOOMSHOP</p>
-        <h2 class="about-title">About the client</h2>
+        <h2 class="about-title">Our Mission</h2>
         <p class="about-lead mb-0">
-          The DOOMSHOP client is aligned with the new music backend domain and focuses on a clean,
-          fast path from discovery to checkout.
+          Our Mission
         </p>
       </div>
     </header>
 
     <div class="about-card card card-body">
       <div class="about-badges">
-        <span class="about-badge">Vue</span>
-        <span class="about-badge">Pinia</span>
-        <span class="about-badge">Axios</span>
-        <span class="about-badge">Laravel API</span>
+        <span class="about-badge">Our Mission</span>
       </div>
-      <p class="mb-0">
-        Roles are separated clearly, with guarded routes and API services that map directly to
-        backend endpoints.
+      <p>
+        Our mission is to connect music creators with those who appreciate and enjoy high-quality
+        sound. We believe that music is more than just entertainment - it is a universal language
+        that inspires, conveys emotions, and brings people together.
       </p>
-    </div>
-
-    <div class="row g-3 mt-1">
-      <div class="col-12 col-lg-4">
-        <div class="about-tile card card-body h-100">
-          <p class="about-pill">Public</p>
-          <h3 class="h6 mb-2">Browse tracks</h3>
-          <p class="mb-0">Open listing with previews and fast discovery.</p>
-        </div>
-      </div>
-      <div class="col-12 col-lg-4">
-        <div class="about-tile card card-body h-100">
-          <p class="about-pill">Customer</p>
-          <h3 class="h6 mb-2">Own profile + cart</h3>
-          <p class="mb-0">Personal profile, cart management, and checkout flow.</p>
-        </div>
-      </div>
-      <div class="col-12 col-lg-4">
-        <div class="about-tile card card-body h-100">
-          <p class="about-pill">Admin</p>
-          <h3 class="h6 mb-2">Full catalog control</h3>
-          <p class="mb-0">Tracks create, genres/artists CRUD, and all carts.</p>
-        </div>
-      </div>
+      <p>
+        Our platform aims to provide a simple and reliable way to discover and purchase music,
+        while supporting artists in gaining the recognition they truly deserve. We are building an
+        environment where creativity is valued, quality is a core principle, and every sound is
+        driven by genuine passion.
+      </p>
+      <p class="mb-0">
+        We strive to deliver an experience for every user - whether it is discovering new
+        favorites or sharing their own musical world.
+      </p>
     </div>
   </section>
 </template>
