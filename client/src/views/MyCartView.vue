@@ -22,6 +22,15 @@
           <div class="item-main">
             <strong>{{ itemLabel(item) }}</strong>
             <small class="text-muted">Type: {{ item.track_id ? "Track" : "Album" }}</small>
+            <div v-if="item.album_id && albumTracks(item).length > 0" class="album-track-summary">
+              <small
+                v-for="track in albumTracks(item)"
+                :key="track.id || track.track_id"
+                class="album-track-line"
+              >
+                {{ track.track_title }}
+              </small>
+            </div>
           </div>
           <div class="item-actions">
             <div class="price-block">
@@ -115,6 +124,11 @@ export default {
     findAlbum(albumId) {
       return (this.albums || []).find((a) => Number(a.id) === Number(albumId)) || null;
     },
+    albumTracks(item) {
+      if (!item?.album_id) return [];
+      const album = this.findAlbum(item.album_id);
+      return Array.isArray(album?.tracks) ? album.tracks : [];
+    },
     itemUnitPrice(item) {
       if (item?.track_id) {
         const track = this.findTrack(item.track_id);
@@ -145,17 +159,27 @@ export default {
 
       if (item.album_id) {
         const album = this.findAlbum(item.album_id);
-        const file = album?.cover;
-        if (!file) return fallback;
-        if (String(file).startsWith("http://") || String(file).startsWith("https://")) return String(file);
-        if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
-        return storageUrl(file);
+        const directCover = this.normalizeStorageAsset(album?.cover);
+        if (directCover) return directCover;
+
+        const firstTrackCover = this.normalizeStorageAsset(album?.tracks?.[0]?.track_cover);
+        if (firstTrackCover) return firstTrackCover;
+
+        return "https://placehold.co/96x96?text=Album";
       }
 
       return fallback;
     },
+    normalizeStorageAsset(file) {
+      if (!file) return "";
+      const normalized = String(file).replace(/\\/g, "/").trim();
+      if (!normalized) return "";
+      if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
+      if (normalized.includes("/")) return storageUrl(normalized.replace(/^storage\//, ""));
+      return storageUrl(normalized);
+    },
     onItemImgError(event) {
-      event.target.src = "https://placehold.co/96x96?text=No+Cover";
+      event.target.src = "https://placehold.co/96x96?text=Cover";
     },
     openDeleteModal(item) {
       this.itemToDelete = item || null;
@@ -181,10 +205,24 @@ export default {
         await this.load();
         this.closeDeleteModal();
       } catch (err) {
-        this.deleteError = err?.response?.data?.message || "Could not delete cart item.";
+        this.deleteError = this.extractErrorMessage(err, "Could not delete cart item.");
       } finally {
         this.deletingItem = false;
       }
+    },
+    extractErrorMessage(err, fallback) {
+      const errors = err?.response?.data?.errors;
+      if (errors && typeof errors === "object") {
+        const firstKey = Object.keys(errors)[0];
+        const firstValue = firstKey ? errors[firstKey] : null;
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+          return firstValue[0];
+        }
+        if (typeof firstValue === "string" && firstValue.trim() !== "") {
+          return firstValue;
+        }
+      }
+      return err?.response?.data?.message || fallback;
     },
   },
   async mounted() {
@@ -260,7 +298,7 @@ export default {
 .item-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -271,6 +309,17 @@ export default {
 .item-main {
   display: grid;
   min-width: 0;
+}
+
+.album-track-summary {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.35rem;
+}
+
+.album-track-line {
+  color: #64748b;
+  line-height: 1.35;
 }
 
 .item-actions {

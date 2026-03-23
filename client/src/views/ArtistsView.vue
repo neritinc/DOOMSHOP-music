@@ -3,6 +3,7 @@
     <h2 class="h5">Artists</h2>
     <form v-if="isAdmin" class="card card-body mb-3" @submit.prevent="createOne">
       <input v-model="form.artist_name" class="form-control mb-2" placeholder="Artist name" required />
+      <div v-if="fieldError(formErrors, 'artist_name')" class="text-danger small mb-2">{{ fieldError(formErrors, 'artist_name') }}</div>
       <div
         class="artist-dropzone mb-2"
         :class="{ 'is-over': isDraggingPicture }"
@@ -27,6 +28,7 @@
           <small class="text-muted">JPG, PNG, WEBP - max 5 MB</small>
         </template>
       </div>
+      <div v-if="fieldError(formErrors, 'artist_picture_file')" class="text-danger small mb-2">{{ fieldError(formErrors, 'artist_picture_file') }}</div>
       <button class="btn btn-primary">Add artist</button>
     </form>
     <div v-if="actionError" class="alert alert-danger py-2 mb-3">{{ actionError }}</div>
@@ -101,6 +103,7 @@
             </div>
 
             <div v-if="updateError" class="alert alert-danger py-2 mb-2">{{ updateError }}</div>
+            <div v-if="fieldError(updateErrors, 'artist_picture_file')" class="text-danger small mb-2">{{ fieldError(updateErrors, 'artist_picture_file') }}</div>
             <div class="d-flex gap-2 justify-content-end">
               <button class="btn btn-outline-secondary btn-sm" type="button" :disabled="updating" @click="closeUpdateModal">
                 Cancel
@@ -139,8 +142,10 @@ export default {
       isDraggingUpdatePicture: false,
       updating: false,
       updateError: "",
+      updateErrors: {},
       deletingArtistId: null,
       actionError: "",
+      formErrors: {},
     };
   },
   methods: {
@@ -171,15 +176,20 @@ export default {
     async createOne() {
       if (!this.isAdmin) return;
       this.actionError = "";
+      this.formErrors = {};
       const payload = new FormData();
       payload.append("artist_name", this.form.artist_name);
       if (this.form.artist_picture) payload.append("artist_picture", this.form.artist_picture);
       if (this.pictureFile) payload.append("artist_picture_file", this.pictureFile);
-
-      await service.create(payload);
-      this.form = { artist_name: "", artist_picture: "" };
-      this.setPictureFile(null);
-      await this.load();
+      try {
+        await service.create(payload);
+        this.form = { artist_name: "", artist_picture: "" };
+        this.setPictureFile(null);
+        await this.load();
+      } catch (err) {
+        this.formErrors = this.extractValidationErrors(err);
+        this.actionError = this.extractErrorMessage(err, "Artist creation failed.");
+      }
     },
     async deleteArtist(artist) {
       if (!this.isAdmin || !artist?.artist_id) return;
@@ -189,6 +199,7 @@ export default {
 
       this.deletingArtistId = artist.artist_id;
       this.actionError = "";
+      this.formErrors = {};
 
       try {
         await service.destroy(artist.artist_id);
@@ -197,7 +208,7 @@ export default {
           this.closeUpdateModal();
         }
       } catch (err) {
-        this.actionError = err?.response?.data?.message || "Artist deletion failed.";
+        this.actionError = this.extractErrorMessage(err, "Artist deletion failed.");
       } finally {
         this.deletingArtistId = null;
       }
@@ -225,6 +236,7 @@ export default {
     openUpdateModal(artist) {
       this.updateArtist = artist || null;
       this.updateError = "";
+      this.updateErrors = {};
       this.setUpdatePictureFile(null);
       this.showUpdateModal = true;
     },
@@ -233,6 +245,7 @@ export default {
       this.showUpdateModal = false;
       this.updateArtist = null;
       this.updateError = "";
+      this.updateErrors = {};
       this.setUpdatePictureFile(null);
     },
     openUpdatePicturePicker() {
@@ -261,6 +274,7 @@ export default {
 
       this.updating = true;
       this.updateError = "";
+      this.updateErrors = {};
       try {
         const payload = new FormData();
         payload.append("artist_name", String(artist.artist_name || "").trim());
@@ -269,10 +283,30 @@ export default {
         await this.load();
         this.closeUpdateModal();
       } catch (err) {
-        this.updateError = err?.response?.data?.message || "Artist image update failed.";
+        this.updateErrors = this.extractValidationErrors(err);
+        this.updateError = this.extractErrorMessage(err, "Artist image update failed.");
       } finally {
         this.updating = false;
       }
+    },
+    extractValidationErrors(err) {
+      const errors = err?.response?.data?.errors;
+      if (!errors || typeof errors !== "object") return {};
+      return Object.fromEntries(
+        Object.entries(errors).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value[0] : String(value || ""),
+        ]),
+      );
+    },
+    extractErrorMessage(err, fallback) {
+      const mapped = this.extractValidationErrors(err);
+      const firstKey = Object.keys(mapped)[0];
+      if (firstKey && mapped[firstKey]) return mapped[firstKey];
+      return err?.response?.data?.message || fallback;
+    },
+    fieldError(source, key) {
+      return source?.[key] || "";
     },
   },
   computed: {

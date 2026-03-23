@@ -3,6 +3,7 @@
     <h2 class="h5">Genres</h2>
     <form v-if="isAdmin" class="card card-body mb-3" @submit.prevent="createOne">
       <input v-model="name" class="form-control mb-2" placeholder="Genre name" required />
+      <div v-if="fieldError('genre_name')" class="text-danger small mb-2">{{ fieldError('genre_name') }}</div>
       <button class="btn btn-primary align-self-start">Add genre</button>
     </form>
     <div v-if="actionError" class="alert alert-danger py-2 mb-3">{{ actionError }}</div>
@@ -33,6 +34,7 @@
               maxlength="255"
               @keyup.esc="cancelEdit"
             />
+            <div v-if="fieldError('genre_name')" class="text-danger small mt-2 text-start w-100">{{ fieldError('genre_name') }}</div>
             <p class="genre-extra mt-2 mb-0 text-start">ID: {{ g.genre_id }}</p>
           </div>
 
@@ -110,6 +112,7 @@ export default {
       isDeleteModalOpen: false,
       genreToDelete: null,
       actionError: "",
+      validationErrors: {},
     };
   },
   computed: {
@@ -130,17 +133,20 @@ export default {
     async createOne() {
       if (!this.isAdmin) return;
       this.actionError = "";
+      this.validationErrors = {};
       try {
         await service.create({ genre_name: this.name });
         this.name = "";
         await this.load();
       } catch (err) {
-        this.actionError = err?.response?.data?.message || "Genre creation failed.";
+        this.validationErrors = this.extractValidationErrors(err);
+        this.actionError = this.extractErrorMessage(err, "Genre creation failed.");
       }
     },
     startEdit(genre) {
       if (!this.isAdmin || !genre?.genre_id) return;
       this.actionError = "";
+      this.validationErrors = {};
       this.editingGenreId = genre.genre_id;
       this.editName = String(genre.genre_name || "");
     },
@@ -148,6 +154,7 @@ export default {
       this.editingGenreId = null;
       this.editName = "";
       this.savingGenreId = null;
+      this.validationErrors = {};
     },
     async saveEdit(genre) {
       if (!this.isAdmin || !genre?.genre_id) return;
@@ -159,6 +166,7 @@ export default {
       }
 
       this.actionError = "";
+      this.validationErrors = {};
       this.savingGenreId = genre.genre_id;
 
       try {
@@ -166,7 +174,8 @@ export default {
         await this.load();
         this.cancelEdit();
       } catch (err) {
-        this.actionError = err?.response?.data?.message || "Genre update failed.";
+        this.validationErrors = this.extractValidationErrors(err);
+        this.actionError = this.extractErrorMessage(err, "Genre update failed.");
       } finally {
         if (this.savingGenreId === genre.genre_id) {
           this.savingGenreId = null;
@@ -176,6 +185,7 @@ export default {
     askDelete(genre) {
       if (!this.isAdmin || !genre?.genre_id) return;
       this.actionError = "";
+      this.validationErrors = {};
       this.genreToDelete = genre;
       this.isDeleteModalOpen = true;
     },
@@ -191,6 +201,7 @@ export default {
       }
 
       this.actionError = "";
+      this.validationErrors = {};
       this.deletingGenreId = genre.genre_id;
 
       try {
@@ -201,10 +212,30 @@ export default {
         await this.load();
         this.closeDeleteModal();
       } catch (err) {
-        this.actionError = err?.response?.data?.message || "Genre deletion failed.";
+        this.validationErrors = this.extractValidationErrors(err);
+        this.actionError = this.extractErrorMessage(err, "Genre deletion failed.");
       } finally {
         this.deletingGenreId = null;
       }
+    },
+    extractValidationErrors(err) {
+      const errors = err?.response?.data?.errors;
+      if (!errors || typeof errors !== "object") return {};
+      return Object.fromEntries(
+        Object.entries(errors).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value[0] : String(value || ""),
+        ]),
+      );
+    },
+    extractErrorMessage(err, fallback) {
+      const mapped = this.extractValidationErrors(err);
+      const firstKey = Object.keys(mapped)[0];
+      if (firstKey && mapped[firstKey]) return mapped[firstKey];
+      return err?.response?.data?.message || fallback;
+    },
+    fieldError(key) {
+      return this.validationErrors?.[key] || "";
     },
   },
   async mounted() {

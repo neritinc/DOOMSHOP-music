@@ -30,13 +30,29 @@
       <div v-for="album in albums" :key="album.id" class="col-12">
         <div class="card card-body">
           <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-            <div>
+            <div class="album-header-main">
               <h3 class="h6 m-0">{{ album.title }}</h3>
               <small class="text-muted">
                 {{ album.release_date || "-" }} - EUR {{ Number(album.price_eur || 0).toFixed(2) }} - {{ (album.tracks || []).length }} tracks
               </small>
+              <div v-if="isCustomer" class="mt-2">
+                <button
+                  type="button"
+                  class="btn btn-dark btn-sm"
+                  :disabled="addingAlbumId === album.id"
+                  @click="addAlbumToCart(album)"
+                >
+                  {{ addingAlbumId === album.id ? "Adding..." : "Add album to cart" }}
+                </button>
+              </div>
+              <small v-if="cartMessageByAlbumId[album.id]" class="d-block mt-2 text-success">
+                {{ cartMessageByAlbumId[album.id] }}
+              </small>
+              <small v-if="cartErrorByAlbumId[album.id]" class="d-block mt-2 text-danger">
+                {{ cartErrorByAlbumId[album.id] }}
+              </small>
             </div>
-            <img v-if="album.cover" :src="coverUrl(album.cover)" alt="Album cover" class="album-cover-thumb" />
+            <img :src="albumImage(album)" alt="Album cover" class="album-cover-thumb" @error="onAlbumImgError" />
             <button
               v-if="isAdmin"
               type="button"
@@ -61,11 +77,16 @@
             </div>
           </div>
 
-          <ul class="mt-2 mb-0 ps-3">
-            <li v-for="track in album.tracks || []" :key="track.id || track.track_id">
-              {{ track.track_title }}
-            </li>
-          </ul>
+          <div v-if="(album.tracks || []).length > 0" class="album-track-list mt-3">
+            <RouterLink
+              v-for="track in album.tracks || []"
+              :key="track.id || track.track_id"
+              class="album-track-row"
+              :to="`/tracks/${track.id || track.track_id}`"
+            >
+              <strong>{{ track.track_title }}</strong>
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>
@@ -75,17 +96,24 @@
 <script>
 import albumService from "@/api/albumService";
 import trackService from "@/api/trackService";
+import cartService from "@/api/cartService";
 import { mapState } from "pinia";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { storageUrl } from "@/utils/storageUrl";
+import { RouterLink } from "vue-router";
 
 export default {
+  components: { RouterLink },
   data() {
     return {
       albums: [],
       tracks: [],
       activeAssignAlbumId: null,
       assignTrackIds: [],
+      customerCartId: null,
+      addingAlbumId: null,
+      cartMessageByAlbumId: {},
+      cartErrorByAlbumId: {},
       coverFile: null,
       coverPreviewUrl: "",
       form: {
@@ -96,7 +124,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(useUserLoginLogoutStore, ["isAdmin"]),
+    ...mapState(useUserLoginLogoutStore, ["isAdmin", "isCustomer"]),
   },
   methods: {
     async load() {
@@ -108,7 +136,23 @@ export default {
       this.tracks = tracksRes.data || [];
     },
     coverUrl(path) {
-      return storageUrl(path, "/images/placeholder-track.svg");
+      if (!path) return "";
+      const normalized = String(path).replace(/\\/g, "/").trim();
+      if (!normalized) return "";
+      if (/^https?:\/\//i.test(normalized)) return normalized;
+      return storageUrl(normalized.replace(/^storage\//, ""));
+    },
+    albumImage(album) {
+      const directCover = this.coverUrl(album?.cover);
+      if (directCover) return directCover;
+
+      const firstTrackCover = this.coverUrl(album?.tracks?.[0]?.track_cover);
+      if (firstTrackCover) return firstTrackCover;
+
+      return "https://placehold.co/72x72?text=Album";
+    },
+    onAlbumImgError(event) {
+      event.target.src = "https://placehold.co/72x72?text=Album";
     },
     onCoverChange(event) {
       const file = event?.target?.files?.[0] ?? null;
@@ -155,9 +199,63 @@ export default {
       this.cancelAssign();
       await this.load();
     },
+    async ensureCustomerCart() {
+      const cartsRes = await cartService.myCarts();
+      const carts = cartsRes?.data || [];
+      if (carts.length > 0) {
+        this.customerCartId = carts[0].id;
+        return;
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const created = await cartService.createMyCart({ date: today });
+      this.customerCartId = created?.data?.id || null;
+    },
+    extractErrorMessage(err, fallback) {
+      const errors = err?.response?.data?.errors;
+      if (errors && typeof errors === "object") {
+        const firstKey = Object.keys(errors)[0];
+        const firstValue = firstKey ? errors[firstKey] : null;
+        if (Array.isArray(firstValue) && firstValue.length > 0) return firstValue[0];
+        if (typeof firstValue === "string" && firstValue.trim() !== "") return firstValue;
+      }
+      return err?.response?.data?.message || fallback;
+    },
+    async addAlbumToCart(album) {
+      if (!this.isCustomer || !album?.id) return;
+      this.addingAlbumId = album.id;
+      this.cartMessageByAlbumId = { ...this.cartMessageByAlbumId, [album.id]: "" };
+      this.cartErrorByAlbumId = { ...this.cartErrorByAlbumId, [album.id]: "" };
+      try {
+        if (!this.customerCartId) {
+          await this.ensureCustomerCart();
+        }
+        if (!this.customerCartId) {
+          throw new Error("Missing cart id.");
+        }
+        await cartService.addMyCartItem({
+          cart_id: this.customerCartId,
+          album_id: album.id,
+          pcs: 1,
+        });
+        this.cartMessageByAlbumId = {
+          ...this.cartMessageByAlbumId,
+          [album.id]: "Album added to cart.",
+        };
+      } catch (err) {
+        this.cartErrorByAlbumId = {
+          ...this.cartErrorByAlbumId,
+          [album.id]: this.extractErrorMessage(err, "Could not add album to cart."),
+        };
+      } finally {
+        this.addingAlbumId = null;
+      }
+    },
   },
   async mounted() {
     await this.load();
+    if (this.isCustomer) {
+      await this.ensureCustomerCart();
+    }
   },
   beforeUnmount() {
     if (this.coverPreviewUrl) {
@@ -168,6 +266,10 @@ export default {
 </script>
 
 <style scoped>
+.album-header-main {
+  min-width: 0;
+}
+
 .album-cover-thumb {
   width: 72px;
   height: 72px;
@@ -198,5 +300,31 @@ export default {
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0.1rem;
+}
+
+.album-track-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.album-track-row {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d7e2f0;
+  border-radius: 10px;
+  background: #fbfdff;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+
+.album-track-row:hover {
+  transform: translateY(-1px);
+  border-color: #a9bddb;
+  box-shadow: 0 10px 22px rgba(20, 37, 63, 0.08);
+}
+
+.album-track-row strong {
+  color: #0f172a;
 }
 </style>
