@@ -24,6 +24,10 @@
             <small class="text-muted">Type: {{ item.track_id ? "Track" : "Album" }}</small>
           </div>
           <div class="item-actions">
+            <div class="price-block">
+              <span class="item-price">{{ formatPrice(itemUnitPrice(item)) }}</span>
+              <small class="item-price-total">Total: {{ formatPrice(itemTotalPrice(item)) }}</small>
+            </div>
             <span class="qty-chip">x{{ Number(item.pcs || 1) }}</span>
             <button class="btn btn-outline-danger btn-sm" type="button" @click="openDeleteModal(item)">Delete</button>
           </div>
@@ -110,6 +114,23 @@ export default {
     },
     findAlbum(albumId) {
       return (this.albums || []).find((a) => Number(a.id) === Number(albumId)) || null;
+    },
+    itemUnitPrice(item) {
+      if (item?.track_id) {
+        const track = this.findTrack(item.track_id);
+        return Number(track?.track_price_eur || 0);
+      }
+      if (item?.album_id) {
+        const album = this.findAlbum(item.album_id);
+        return Number(album?.price_eur || 0);
+      }
+      return 0;
+    },
+    itemTotalPrice(item) {
+      return this.itemUnitPrice(item) * Number(item?.pcs || 1);
+    },
+    formatPrice(value) {
+      return `EUR ${Number(value || 0).toFixed(2)}`;
     },
     itemCover(item) {
       const fallback = "https://placehold.co/96x96?text=Cover";
@@ -256,6 +277,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .item-cover {
@@ -265,6 +288,23 @@ export default {
   border-radius: 8px;
   border: 1px solid #dbe3ef;
   flex: 0 0 auto;
+}
+
+.price-block {
+  display: grid;
+  justify-items: end;
+  min-width: 90px;
+}
+
+.item-price {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.item-price-total {
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .qty-chip {
