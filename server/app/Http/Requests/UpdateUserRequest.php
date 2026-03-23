@@ -52,21 +52,17 @@ class UpdateUserRequest extends FormRequest
 
     public function messages(): array
     {
-       return [
-        // Name & Email (csak akkor jönnek elő, ha beküldték az adatot, de az hibás)
-        'name.string'       => 'A névnek szöveges formátumúnak kell lennie.',
-        'name.unique'      => 'Ez a név már foglalt.',
+          return [
+                'name.string'   => 'The name must be a string.',
+                'name.unique'   => 'This name is already taken.',
 
-        'email.email'       => 'Érvényes e-mail címet kell megadni.',
-        'email.unique'      => 'Ez az e-mail cím már foglalt.',
-        
-        // Password
-        'password.min'      => 'A jelszónak legalább 8 karakternek kell lennie.',
-        
-        // Role (A te egyedi logikád és a tartomány ellenőrzése)
-        'role.integer'       => 'A szerepkörnek egész számnak kell lennie.',
-        'role.between'       => 'A szerepkör csak 1 és 3 közötti érték lehet.',
-        // 'role.not_self_role' => 'Saját magad szerepkörét biztonsági okokból nem módosíthatod.',
-    ];
+                'email.email'   => 'Please provide a valid email address.',
+                'email.unique'  => 'This email is already taken.',
+    
+                'password.min'  => 'The password must be at least 8 characters.',
+    
+                'role.integer'  => 'The role must be an integer.',
+                'role.between'  => 'The role must be between 1 and 3.',
+                ];
     }
 }
