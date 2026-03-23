@@ -25,7 +25,7 @@ class StoreUserRequest extends FormRequest
             'name'     => 'required|string|unique:users,name|max:255',
             'email'    => 'required|email|unique:users,email|max:255',
             'password' => 'required|string',
-            // Itt a változtatás:
+            // Itt a változtatás
             'role'     => 'nullable|integer|between:1,3' //role kihagyható, de ha meg van adva, akkor csak 1, 2 vagy 3 lehet
 
         ];
