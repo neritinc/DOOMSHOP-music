@@ -141,5 +141,21 @@ Vagyis:
 5. Admin le tudja játszani a teljes tracket (`/source`).
 
 ---
+Röviden: az ffmpeg egy parancssoros eszköz hang‑ és videófájlok vágására/átalakítására. Ebben a projektben azért kell, hogy a feltöltött teljes zenéből automatikusan kivágjon egy 30 mp‑es előnézetet, amit a vásárló lejátszhat.
 
-Ha szeretnéd, kiegészítem ábrával, vagy írok rövid “hogyan teszteld” részt is.
+Konkrétan itt használjuk:
+
+server/app/Jobs/GenerateTrackPreview.php
+Ott az ffmpeg parancs:
+
+-ss → a vágás kezdete (preview_start_at)
+-t → a vágás hossza (preview_end_at − preview_start_at)
+Eredmény:
+
+létrejön egy rövid mp3 fájl a storage/app/public/previews/ mappában,
+ennek az útvonala kerül a DB‑be preview_path mezőbe,
+a vásárló ezt a rövid fájlt kapja /tracks/{id}/preview végponton.
+Ha kéred, hozzáírom a magyarázatot a music_upload.md‑hez is.
+
+
+
