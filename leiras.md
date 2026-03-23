@@ -225,5 +225,30 @@ A megjelenítés a `client/src/components/Message/ToastContanier.vue` fájlban t
 
 ---
 
-Ha szeretnél külön leírást bármelyik konkrét nézetről (pl. `TracksView.vue` audio-preview része, vagy `TrackDetailView.vue` admin lejátszó), szólj, és kibővítem.
+
+
+
+
+Pontosan, mindkét út a tracks táblához vezet, de két különböző módon kapcsolódnak. Ez azért fontos, mert a rendszer két különböző igényt szolgál ki egyszerre:
+
+1. A közvetlen kapcsolat (tracks.genre_id)
+Ez a "Fő műfaj".
+
+Mire jó? Gyorsan megmondja, mi a dal elsődleges stílusa.
+
+Korlátja: Itt csak egyetlen azonosítót tárolhatsz. Egy dal nem lehet egyszerre 1-es (Rock) és 2-es (Pop) azonosítójú ebben az oszlopban.
+
+2. A kapcsolótáblás út (track_genres)
+Ez a "Több műfaj" (Many-to-Many) kapcsolat.
+
+Mire jó? Itt bármennyi párosítást létrehozhatsz. Ugyanaz a track_id szerepelhet többször is, más-más genre_id-val.
+
+Példa: A dalod lehet egyszerre Electronic, Synthwave és 80s.
+
+Miért van mindkettő? (A te esetedben)
+A korábban küldött PHP kódjaid alapján ez a kettősség azért van, mert:
+
+Az adatbázisod rugalmas (több műfajt enged a kapcsolótáblán keresztül).
+
+De a rendszerednek szüksége van egy fix CSV exportra is, ami valószínűleg egy egyszerűsített listát vár.
 

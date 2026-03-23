@@ -6,6 +6,7 @@
         <input v-model="email" class="form-control mb-2" type="email" placeholder="Email" required />
         <input v-model="password" class="form-control mb-3" type="password" placeholder="Password" required />
         <button class="btn btn-primary" :disabled="loading">Sign in</button>
+        <RouterLink class="small mt-3 d-inline-block" to="/registration">Create a new account</RouterLink>
       </form>
     </div>
   </div>

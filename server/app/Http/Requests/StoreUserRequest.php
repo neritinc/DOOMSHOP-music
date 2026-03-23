@@ -24,9 +24,9 @@ class StoreUserRequest extends FormRequest
         return [
             'name'     => 'required|string|unique:users,name|max:255',
             'email'    => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string',
             // Itt a változtatás:
-            'role'     => 'nullable|integer|between:1,3'
+            'role'     => 'nullable|integer|between:1,3' //role kihagyható, de ha meg van adva, akkor csak 1, 2 vagy 3 lehet
 
         ];
     }
@@ -47,7 +47,6 @@ class StoreUserRequest extends FormRequest
 
             'password.required' => 'A jelszó megadása kötelező.',
             'password.string'   => 'A jelszó formátuma érvénytelen.',
-            'password.min'      => 'A jelszónak legalább 8 karakterből kell állnia.',
 
             'role.integer' => 'A szerepkörnek számnak kell lennie.',
             'role.between' => 'A szerepkör értéke csak 1 és 3 közötti szám lehet.',
