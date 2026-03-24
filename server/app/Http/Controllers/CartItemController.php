@@ -13,7 +13,7 @@ class CartItemController extends Controller
     {
         return response()->json([
             'message' => 'ok',
-            'data' => CartItem::with(['cart', 'track'])->get(),
+            'data' => CartItem::with(['cart', 'track', 'album'])->get(),
         ]);
     }
 
@@ -21,9 +21,16 @@ class CartItemController extends Controller
     {
         $validated = $request->validate([
             'cart_id' => 'required|integer|exists:carts,id',
-            'track_id' => 'required|integer|exists:tracks,id',
+            'track_id' => 'nullable|integer|exists:tracks,id',
+            'album_id' => 'nullable|integer|exists:albums,id',
             'pcs' => 'required|integer|min:1',
         ]);
+        if (empty($validated['track_id']) && empty($validated['album_id'])) {
+            return response()->json(['message' => 'Track or album is required', 'data' => null], 422);
+        }
+        if (! empty($validated['track_id']) && ! empty($validated['album_id'])) {
+            return response()->json(['message' => 'Provide either track or album, not both', 'data' => null], 422);
+        }
 
         $item = CartItem::create($validated);
         return response()->json(['message' => 'Cart item created', 'data' => $item], 201);
@@ -31,7 +38,7 @@ class CartItemController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $item = CartItem::with(['cart', 'track'])->find($id);
+        $item = CartItem::with(['cart', 'track', 'album'])->find($id);
         if (! $item) {
             return response()->json(['message' => 'Cart item not found', 'data' => null], 404);
         }
@@ -68,6 +75,7 @@ class CartItemController extends Controller
         $userId = $request->user()->id;
 
         $data = CartItem::with(['cart', 'track'])
+            ->with(['album'])
             ->whereIn('cart_id', function ($query) use ($userId) {
                 $query->select('id')->from('carts')->where('user_id', $userId);
             })
@@ -80,9 +88,16 @@ class CartItemController extends Controller
     {
         $validated = $request->validate([
             'cart_id' => 'required|integer|exists:carts,id',
-            'track_id' => 'required|integer|exists:tracks,id',
+            'track_id' => 'nullable|integer|exists:tracks,id',
+            'album_id' => 'nullable|integer|exists:albums,id',
             'pcs' => 'required|integer|min:1',
         ]);
+        if (empty($validated['track_id']) && empty($validated['album_id'])) {
+            return response()->json(['message' => 'Track or album is required', 'data' => null], 422);
+        }
+        if (! empty($validated['track_id']) && ! empty($validated['album_id'])) {
+            return response()->json(['message' => 'Provide either track or album, not both', 'data' => null], 422);
+        }
 
         $isOwnCart = DB::table('carts')
             ->where('id', $validated['cart_id'])

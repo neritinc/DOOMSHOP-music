@@ -20,8 +20,10 @@
             <li class="nav-item"><RouterLink class="nav-link" to="/tracks">Tracks</RouterLink></li>
             <li class="nav-item"><RouterLink class="nav-link" to="/genres">Genres</RouterLink></li>
             <li class="nav-item"><RouterLink class="nav-link" to="/artists">Artists</RouterLink></li>
+            <li class="nav-item"><RouterLink class="nav-link" to="/albums">Albums</RouterLink></li>
             <li v-if="isLoggedIn" class="nav-item"><RouterLink class="nav-link" to="/my-cart">My Cart</RouterLink></li>
             <li v-if="isAdmin" class="nav-item"><RouterLink class="nav-link" to="/admin-carts">All Carts</RouterLink></li>
+            <li v-if="!isLoggedIn" class="nav-item"><RouterLink class="nav-link" to="/registration">Register</RouterLink></li>
             <li class="nav-item">
               <RouterLink v-if="!isLoggedIn" class="nav-link" to="/login">Login</RouterLink>
               <div v-else class="d-flex align-items-center gap-2 px-2">

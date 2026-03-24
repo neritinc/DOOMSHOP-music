@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTrackRequest;
 use App\Http\Requests\UpdateTrackRequest;
 use App\Jobs\GenerateTrackPreview;
+use App\Models\Album;
 use App\Models\Artist;
 use App\Models\Genre;
 use App\Models\Track;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use FFMpeg\FFProbe;
 use Symfony\Component\Process\Process;
@@ -20,8 +22,49 @@ class TrackController extends Controller
 {
     public function analyzeUpload(Request $request): JsonResponse
     {
+        $errorMap = [
+            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds upload_max_filesize.',
+            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds MAX_FILE_SIZE.',
+            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder.',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
+        ];
+
+        $rawFile = $request->file('track_audio');
+        if ($rawFile instanceof UploadedFile && ! $rawFile->isValid()) {
+            $code = $rawFile->getError();
+            return response()->json([
+                'message' => 'The track audio failed to upload.',
+                'data' => [
+                    'upload_error_code' => $code,
+                    'upload_error' => $errorMap[$code] ?? 'Unknown upload error.',
+                    'post_max_size' => ini_get('post_max_size'),
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+                ],
+            ], 422);
+        }
+
+        if (! $rawFile && isset($_FILES['track_audio'])) {
+            $code = (int) ($_FILES['track_audio']['error'] ?? -1);
+            if ($code !== UPLOAD_ERR_OK) {
+                return response()->json([
+                    'message' => 'The track audio failed to upload.',
+                    'data' => [
+                        'upload_error_code' => $code,
+                        'upload_error' => $errorMap[$code] ?? 'Unknown upload error.',
+                        'post_max_size' => ini_get('post_max_size'),
+                        'upload_max_filesize' => ini_get('upload_max_filesize'),
+                        'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+                    ],
+                ], 422);
+            }
+        }
+
         $validated = $request->validate([
-            'track_audio' => 'required|file|max:51200',
+            'track_audio' => 'required|file|max:1048576',
         ]);
 
         /** @var UploadedFile $file */
@@ -102,7 +145,7 @@ class TrackController extends Controller
     public function index(Request $request): JsonResponse
     {
         $isAdmin = $this->isAdmin($request);
-        $tracks = Track::with(['genre', 'genres', 'artists'])->get()->map(
+        $tracks = Track::with(['genre', 'genres', 'artists', 'album'])->get()->map(
             fn (Track $track) => $this->transformTrackForViewer($track, $isAdmin)
         );
 
@@ -114,7 +157,7 @@ class TrackController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $track = Track::with(['genre', 'genres', 'artists'])->find($id);
+        $track = Track::with(['genre', 'genres', 'artists', 'album'])->find($id);
 
         if (! $track) {
             return response()->json([
@@ -135,6 +178,7 @@ class TrackController extends Controller
 
         $genreIds = $this->resolveGenreIds($data);
         $genreId = $genreIds[0] ?? null;
+        $albumId = $this->resolveAlbumId($data);
 
         $coverPath = $data['track_cover'] ?? null;
         if ($request->hasFile('track_cover_file')) {
@@ -143,15 +187,18 @@ class TrackController extends Controller
 
         $trackPath = $data['track_path'] ?? null;
         if ($request->hasFile('track_audio')) {
-            $trackPath = $request->file('track_audio')->store('tracks', 'public');
+            /** @var UploadedFile $audioFile */
+            $audioFile = $request->file('track_audio');
+            $trackPath = $this->storeUploadedAudioFile($audioFile);
         }
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
-        $releaseDate = $this->normalizeReleaseDate($data['release_date'] ?? null);
+        $releaseDate = $this->normalizeNullableDate($data['release_date'] ?? null);
 
         $track = Track::query()->create([
             'genre_id' => $genreId,
+            'album_id' => $albumId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
             'release_date' => $releaseDate,
@@ -208,7 +255,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Track created successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
         ], 201);
     }
 
@@ -226,10 +273,13 @@ class TrackController extends Controller
 
         $genreIds = $this->resolveGenreIds($data);
         $genreId = $genreIds[0] ?? null;
+        $albumId = $this->resolveAlbumId($data);
 
         $oldCoverPath = (string) ($track->track_cover ?? '');
         $oldTrackPath = (string) ($track->track_path ?? '');
         $oldPreviewPath = (string) ($track->preview_path ?? '');
+        $oldPreviewStart = (int) ($track->preview_start_at ?? 0);
+        $oldPreviewEnd = (int) ($track->preview_end_at ?? 0);
 
         $coverPath = $data['track_cover'] ?? $track->track_cover;
         $coverReplaced = false;
@@ -241,16 +291,19 @@ class TrackController extends Controller
         $trackPath = $data['track_path'] ?? $track->track_path;
         $audioReplaced = false;
         if ($request->hasFile('track_audio')) {
-            $trackPath = $request->file('track_audio')->store('tracks', 'public');
+            /** @var UploadedFile $audioFile */
+            $audioFile = $request->file('track_audio');
+            $trackPath = $this->storeUploadedAudioFile($audioFile);
             $audioReplaced = true;
         }
 
         $previewStart = (int) ($data['preview_start_at'] ?? 0);
         $previewEnd = (int) ($data['preview_end_at'] ?? 30);
-        $releaseDate = $this->normalizeReleaseDate($data['release_date'] ?? null);
+        $releaseDate = $this->normalizeNullableDate($data['release_date'] ?? null);
 
         $track->fill([
             'genre_id' => $genreId,
+            'album_id' => $albumId,
             'track_title' => $data['track_title'],
             'bpm_value' => $data['bpm_value'] ?? null,
             'release_date' => $releaseDate,
@@ -287,7 +340,10 @@ class TrackController extends Controller
             $track->genres()->sync($genreIds);
         }
 
-        if (! empty($trackPath) && ($previewEnd - $previewStart) > 0) {
+        $previewChanged = $previewStart !== $oldPreviewStart || $previewEnd !== $oldPreviewEnd;
+        $shouldRegeneratePreview = ($audioReplaced || $previewChanged) && ! empty($trackPath) && ($previewEnd - $previewStart) > 0;
+
+        if ($shouldRegeneratePreview) {
             (new GenerateTrackPreview($track))->handle();
             $track->refresh();
 
@@ -317,7 +373,7 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Track updated successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
         ]);
     }
 
@@ -475,7 +531,36 @@ class TrackController extends Controller
 
         return response()->json([
             'message' => 'Preview regenerated successfully',
-            'data' => $track->load(['genre', 'genres', 'artists']),
+            'data' => $track->load(['genre', 'genres', 'artists', 'album']),
+        ]);
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        $track = Track::query()->find($id);
+        if (! $track) {
+            return response()->json([
+                'message' => "Track not found: {$id}",
+                'data' => null,
+            ], 404);
+        }
+
+        $trackPath = (string) ($track->track_path ?? '');
+        $coverPath = (string) ($track->track_cover ?? '');
+
+        $track->delete();
+
+        if ($trackPath !== '' && Storage::disk('public')->exists($trackPath)) {
+            Storage::disk('public')->delete($trackPath);
+        }
+
+        if ($coverPath !== '' && Storage::disk('public')->exists($coverPath)) {
+            Storage::disk('public')->delete($coverPath);
+        }
+
+        return response()->json([
+            'message' => 'Track deleted successfully',
+            'data' => null,
         ]);
     }
 
@@ -566,6 +651,54 @@ class TrackController extends Controller
         return $base . '.' . $ext;
     }
 
+    private function storeUploadedAudioFile(UploadedFile $file): string
+    {
+        $originalName = pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME);
+        $baseName = trim((string) $originalName);
+        if ($baseName === '') {
+            $baseName = 'track';
+        }
+
+        $safeBase = Str::slug($baseName, '_');
+        if ($safeBase === '') {
+            $safeBase = 'track';
+        }
+
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        if ($extension === '') {
+            $extension = strtolower((string) $file->extension());
+        }
+        $extension = preg_replace('/[^a-z0-9]+/', '', $extension) ?? '';
+
+        // If extension is missing or generic, infer from MIME type.
+        if ($extension === '' || $extension === 'bin') {
+            $mime = strtolower((string) ($file->getMimeType() ?? ''));
+            $map = [
+                'audio/mpeg' => 'mp3',
+                'audio/mp3' => 'mp3',
+                'audio/wav' => 'wav',
+                'audio/x-wav' => 'wav',
+                'audio/ogg' => 'ogg',
+                'audio/opus' => 'ogg',
+                'audio/mp4' => 'm4a',
+                'audio/x-m4a' => 'm4a',
+                'audio/flac' => 'flac',
+                'audio/x-flac' => 'flac',
+            ];
+            if (isset($map[$mime])) {
+                $extension = $map[$mime];
+            }
+        }
+
+        if ($extension === '') {
+            $extension = 'mp3';
+        }
+
+        $fileName = $safeBase . '_' . Str::lower(Str::random(8)) . '.' . $extension;
+
+        return $file->storeAs('tracks', $fileName, 'public');
+    }
+
     private function resolveTrackSourcePath(string $trackPath): ?string
     {
         $variants = array_values(array_unique(array_filter([
@@ -596,17 +729,6 @@ class TrackController extends Controller
         }
 
         return null;
-    }
-
-    private function normalizeReleaseDate(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $normalized = trim((string) $value);
-
-        return $normalized !== '' ? $normalized : null;
     }
 
     private function isAdmin(Request $request): bool
@@ -672,6 +794,36 @@ class TrackController extends Controller
         $genreIds = array_values(array_unique(array_filter($genreIds, static fn ($id) => (int) $id > 0)));
 
         return $genreIds;
+    }
+
+    private function resolveAlbumId(array $data): ?int
+    {
+        if (! empty($data['album_id'])) {
+            return (int) $data['album_id'];
+        }
+
+        if (! empty($data['album_title'])) {
+            $normalizedTitle = trim((string) $data['album_title']);
+            if ($normalizedTitle === '') {
+                return null;
+            }
+
+            $album = Album::query()
+                ->whereRaw('LOWER(title) = ?', [mb_strtolower($normalizedTitle)])
+                ->first();
+
+            if (! $album) {
+                $album = Album::query()->create([
+                    'title' => $normalizedTitle,
+                    'price_eur' => 0,
+                    'is_active' => true,
+                ]);
+            }
+
+            return (int) $album->id;
+        }
+
+        return null;
     }
 
     private function resolveGenreNameToId(string $genreName): ?int
@@ -983,6 +1135,12 @@ class TrackController extends Controller
         }
 
         return 'image/jpeg';
+    }
+
+    private function normalizeNullableDate(mixed $value): ?string
+    {
+        $normalized = trim((string) $value);
+        return $normalized !== '' ? $normalized : null;
     }
 
     private function canExecuteBinary(string $binary): bool

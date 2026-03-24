@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArtistController;
+use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\GenreController;
@@ -72,16 +73,27 @@ Route::delete('users/{id}', [UserController::class, 'destroy'])
 
 //region Tracks
 Route::get('tracks', [TrackController::class, 'index']);
-Route::get('tracks/{id}/preview', [TrackController::class, 'preview']);
-Route::get('tracks/{id}/source', [TrackController::class, 'source']);
-Route::get('tracks/{id}', [TrackController::class, 'show']);
+Route::get('tracks/{id}/preview', [TrackController::class, 'preview'])->whereNumber('id');
+Route::get('tracks/{id}/source', [TrackController::class, 'source'])->whereNumber('id');
+Route::get('tracks/{id}', [TrackController::class, 'show'])->whereNumber('id');
+Route::get('tracks/analyze-upload', function () {
+    return response()->json([
+        'message' => 'Use POST for analyze-upload.',
+        'data' => null,
+    ], 405);
+});
 Route::post('tracks/analyze-upload', [TrackController::class, 'analyzeUpload'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks', [TrackController::class, 'store'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::post('tracks/{id}/regenerate-preview', [TrackController::class, 'regeneratePreview'])
+    ->whereNumber('id')
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::patch('tracks/{id}', [TrackController::class, 'update'])
+    ->whereNumber('id')
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('tracks/{id}', [TrackController::class, 'destroy'])
+    ->whereNumber('id')
     ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 
@@ -104,6 +116,19 @@ Route::post('artists', [ArtistController::class, 'store'])
 Route::patch('artists/{id}', [ArtistController::class, 'update'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 Route::delete('artists/{id}', [ArtistController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+//endregion
+
+//region Albums
+Route::get('albums', [AlbumController::class, 'index']);
+Route::get('albums/{id}', [AlbumController::class, 'show']);
+Route::post('albums', [AlbumController::class, 'store'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::patch('albums/{id}', [AlbumController::class, 'update'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::delete('albums/{id}', [AlbumController::class, 'destroy'])
+    ->middleware(['auth:sanctum', 'ability:admin']);
+Route::patch('albums/{id}/tracks', [AlbumController::class, 'syncTracks'])
     ->middleware(['auth:sanctum', 'ability:admin']);
 //endregion
 

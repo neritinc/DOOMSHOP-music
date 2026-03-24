@@ -76,8 +76,22 @@ npm install
 Pop-Location
 
 Write-Host "Detecting ffmpeg / ffprobe..."
-$ffmpegPath = (where.exe ffmpeg 2>$null | Select-Object -First 1)
-$ffprobePath = (where.exe ffprobe 2>$null | Select-Object -First 1)
+function Find-Exe {
+    param([string]$ExeName)
+    $cmd = Get-Command $ExeName -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source
+    if ($cmd) { return $cmd }
+
+    $wingetRoot = Join-Path $env:LOCALAPPDATA "Microsoft\\WinGet\\Packages"
+    if (Test-Path $wingetRoot) {
+        $found = Get-ChildItem -Path $wingetRoot -Recurse -Filter $ExeName -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        if ($found) { return $found }
+    }
+
+    return $null
+}
+
+$ffmpegPath = Find-Exe "ffmpeg.exe"
+$ffprobePath = Find-Exe "ffprobe.exe"
 
 if ($ffmpegPath -and $ffprobePath) {
     Write-Host "Saving ffmpeg paths into server .env..."

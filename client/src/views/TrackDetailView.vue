@@ -9,13 +9,19 @@
       <div class="layout-left">
         <img class="detail-cover" :src="coverUrl(track.track_cover)" :alt="track.track_title" @error="onImgError" />
 
-        <div class="meta-box">
-          <div class="meta-row"><span class="meta-key">Artists</span><span class="meta-val">{{ artistNames(track) }}</span></div>
-          <div class="meta-row"><span class="meta-key">Genre</span><span class="meta-val">{{ track.genre?.genre_name || "-" }}</span></div>
-          <div class="meta-row"><span class="meta-key">BPM</span><span class="meta-val">{{ track.bpm_value || "-" }}</span></div>
-          <div class="meta-row"><span class="meta-key">Release</span><span class="meta-val">{{ track.release_date || "-" }}</span></div>
-          <div class="meta-row"><span class="meta-key">Length</span><span class="meta-val">{{ formatLength(track.track_length_sec) }}</span></div>
-          <div class="meta-row"><span class="meta-key">Price</span><span class="meta-val">{{ formatPrice(track.track_price_eur) }}</span></div>
+        <div class="detail-facts">
+          <div class="fact-row"><span class="fact-key">Artists</span><span class="fact-val">{{ artistNames(track) }}</span></div>
+          <div class="fact-row"><span class="fact-key">Genres</span><span class="fact-val">{{ genreNames(track) }}</span></div>
+          <div v-if="track.album?.id && track.album?.title" class="fact-row">
+            <span class="fact-key">Album</span>
+            <RouterLink class="fact-val album-link" :to="`/albums?album=${track.album.id}`">
+              {{ track.album.title }}
+            </RouterLink>
+          </div>
+          <div class="fact-row"><span class="fact-key">BPM</span><span class="fact-val">{{ track.bpm_value || "-" }}</span></div>
+          <div class="fact-row"><span class="fact-key">Release</span><span class="fact-val">{{ track.release_date || "-" }}</span></div>
+          <div class="fact-row"><span class="fact-key">Length</span><span class="fact-val">{{ formatLength(track.track_length_sec) }}</span></div>
+          <div class="fact-row"><span class="fact-key">Price</span><span class="fact-val">{{ formatPrice(track.track_price_eur) }}</span></div>
         </div>
       </div>
 
@@ -70,11 +76,26 @@
         </div>
 
         <div class="after-player">
-          <div class="quality-row">
-            <strong>Quality</strong>
-            <button class="btn btn-dark btn-sm quality-btn" type="button">Choose an option</button>
-          </div>
-          <button class="btn btn-secondary btn-sm mt-2" type="button" disabled>Add to cart</button>
+          <RouterLink
+            v-if="track.album?.id && track.album?.title"
+            class="album-cta mt-2"
+            :to="`/albums?album=${track.album.id}`"
+          >
+            BUY FULL ALBUM
+          </RouterLink>
+          <button
+            v-if="isCustomer"
+            class="cart-cta mt-2"
+            type="button"
+            :disabled="addingToCart || !trackId(track)"
+            @click="addTrackToCart"
+          >
+            <span class="cart-cta__icon" aria-hidden="true">+</span>
+            <span>{{ addingToCart ? "Adding..." : "Add to cart" }}</span>
+          </button>
+          <small v-if="cartMessage" class="d-block mt-2 text-success">{{ cartMessage }}</small>
+          <small v-if="cartError" class="d-block mt-2 text-danger">{{ cartError }}</small>
+          <small v-if="!isCustomer" class="text-muted d-block mt-2">Login as customer to add items to cart.</small>
         </div>
 
         <form v-if="isAdmin" class="card card-body mt-3" @submit.prevent="saveTrack">
@@ -92,6 +113,13 @@
             </div>
             <div class="col-md-3"><input v-model.number="edit.bpm_value" class="form-control" type="number" min="1" max="999" placeholder="BPM" /></div>
             <div class="col-md-3"><input v-model.number="edit.track_price_eur" class="form-control" type="number" min="0" step="0.01" placeholder="Price (€)" /></div>
+            <div class="col-md-3">
+              <select v-model="edit.album_id" class="form-select">
+                <option value="">No album</option>
+                <option v-for="a in albums" :key="`edit-album-${a.id}`" :value="String(a.id)">{{ a.title }}</option>
+              </select>
+            </div>
+            <div class="col-md-3"><input v-model="edit.album_title" class="form-control" placeholder="Or new album title" /></div>
           </div>
 
           <div class="row g-2 mt-1">
@@ -154,8 +182,39 @@
           </div>
 
           <button class="btn btn-primary btn-sm mt-3 align-self-start" :disabled="saving">{{ saving ? "Saving..." : "Save changes" }}</button>
+          <button class="btn btn-danger btn-sm mt-2 align-self-start" type="button" :disabled="deleting" @click="deleteTrack">
+            {{ deleting ? "Deleting..." : "Delete track" }}
+          </button>
           <audio ref="previewAudioRef" :src="audioPreviewUrl" preload="auto" class="d-none" @ended="stopPreviewSegment" @timeupdate="onPreviewTimeUpdate"></audio>
         </form>
+      </div>
+    </div>
+
+    <div v-if="showDeleteModal" class="modal-backdrop-custom" @click.self="cancelDelete">
+      <div class="delete-modal card shadow">
+        <div class="card-body">
+          <h3 class="h5 mb-2">Delete track?</h3>
+          <p class="mb-2">
+            You are about to delete: <strong>{{ track?.track_title || "this track" }}</strong>
+          </p>
+          <p class="mb-2">This action will remove:</p>
+          <ul class="mb-3">
+            <li>Track record from database</li>
+            <li>Source audio file from storage</li>
+            <li>Cover image from storage</li>
+            <li>Generated preview file and CSV exports</li>
+          </ul>
+          <p class="text-danger mb-3">This cannot be undone.</p>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-outline-secondary btn-sm" type="button" :disabled="deleting" @click="cancelDelete">
+              Cancel
+            </button>
+            <button class="btn btn-danger btn-sm" type="button" :disabled="deleting" @click="confirmDeleteTrack">
+              {{ deleting ? "Deleting..." : "Yes, delete" }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -167,12 +226,16 @@ import { RouterLink } from "vue-router";
 import service from "@/api/trackService";
 import genreService from "@/api/genreService";
 import artistService from "@/api/artistService";
+import albumService from "@/api/albumService";
+import cartService from "@/api/cartService";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 import { storageUrl } from "@/utils/storageUrl";
 import NeonWavePlayer from "@/components/AudioPlayer/NeonWavePlayer.vue";
 
 const emptyEdit = () => ({
   track_title: "",
+  album_id: "",
+  album_title: "",
   genre_name: "",
   bpm_value: null,
   track_price_eur: 1.99,
@@ -192,8 +255,11 @@ export default {
       track: null,
       genres: [],
       artists: [],
+      albums: [],
       edit: emptyEdit(),
       saving: false,
+      deleting: false,
+      showDeleteModal: false,
       editError: "",
       editSuccess: "",
       audioFile: null,
@@ -207,6 +273,10 @@ export default {
       adminIsPlaying: false,
       adminDuration: 0,
       adminCurrentTime: 0,
+      addingToCart: false,
+      customerCartId: null,
+      cartMessage: "",
+      cartError: "",
     };
   },
   computed: {
@@ -258,6 +328,15 @@ export default {
     artistNames(track) {
       return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
     },
+    genreNames(track) {
+      const list = (track.genres || [])
+        .map((g) => g?.genre_name)
+        .filter((name) => String(name || "").trim() !== "");
+      if (list.length === 0 && track?.genre?.genre_name) {
+        list.push(track.genre.genre_name);
+      }
+      return list.length > 0 ? list.join(", ") : "-";
+    },
     firstArtist(track) {
       return track?.artists?.[0]?.artist_name || "Artist";
     },
@@ -290,6 +369,8 @@ export default {
       const t = this.track || {};
       this.edit = {
         track_title: t.track_title || "",
+        album_id: t.album?.id ? String(t.album.id) : "",
+        album_title: "",
         genre_name: t.genre?.genre_name || "",
         bpm_value: t.bpm_value || null,
         track_price_eur: Number(t.track_price_eur ?? 1.99),
@@ -507,19 +588,62 @@ export default {
       this.error = "";
       try {
         const id = this.$route.params.id;
-        const [trackRes, genresRes, artistsRes] = await Promise.all([
+        const [trackRes, genresRes, artistsRes, albumsRes] = await Promise.all([
           service.show(id),
           genreService.list(),
           artistService.list(),
+          albumService.list(),
         ]);
         this.track = trackRes.data || null;
+        console.log("track",this.track);
+        
         this.genres = genresRes.data || [];
         this.artists = artistsRes.data || [];
+        this.albums = albumsRes.data || [];
         this.initEditFromTrack();
+        if (this.isCustomer) {
+          await this.ensureCustomerCart();
+        }
       } catch (err) {
         this.error = err?.response?.data?.message || "Track loading failed.";
       } finally {
         this.loading = false;
+      }
+    },
+    async ensureCustomerCart() {
+      const cartsRes = await cartService.myCarts();
+      const carts = cartsRes?.data || [];
+      if (carts.length > 0) {
+        this.customerCartId = carts[0].id;
+        return;
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const created = await cartService.createMyCart({ date: today });
+      this.customerCartId = created?.data?.id || null;
+    },
+    async addTrackToCart() {
+      if (!this.isCustomer || !this.track) return;
+      this.addingToCart = true;
+      this.cartMessage = "";
+      this.cartError = "";
+      try {
+        if (!this.customerCartId) {
+          await this.ensureCustomerCart();
+        }
+        const id = this.trackId(this.track);
+        if (!id || !this.customerCartId) {
+          throw new Error("Missing cart or track id.");
+        }
+        await cartService.addMyCartItem({
+          cart_id: this.customerCartId,
+          track_id: id,
+          pcs: 1,
+        });
+        this.cartMessage = "Track added to cart.";
+      } catch (err) {
+        this.cartError = err?.response?.data?.message || "Could not add track to cart.";
+      } finally {
+        this.addingToCart = false;
       }
     },
     async saveTrack() {
@@ -530,6 +654,11 @@ export default {
       try {
         const payload = new FormData();
         payload.append("track_title", this.edit.track_title);
+        if (this.edit.album_id) {
+          payload.append("album_id", String(this.edit.album_id));
+        } else if (String(this.edit.album_title || "").trim() !== "") {
+          payload.append("album_title", String(this.edit.album_title).trim());
+        }
         if (this.selectedGenre?.genre_id) payload.append("genre_id", String(this.selectedGenre.genre_id));
         else payload.append("genre_name", this.edit.genre_name);
 
@@ -557,6 +686,33 @@ export default {
         this.saving = false;
       }
     },
+    async deleteTrack() {
+      if (!this.isAdmin || !this.track || this.deleting) return;
+      this.showDeleteModal = true;
+    },
+    cancelDelete() {
+      if (this.deleting) return;
+      this.showDeleteModal = false;
+    },
+    async confirmDeleteTrack() {
+      if (!this.isAdmin || !this.track) return;
+      const id = this.trackId(this.track);
+      if (!id) return;
+
+      this.deleting = true;
+      this.editError = "";
+      this.editSuccess = "";
+
+      try {
+        await service.destroy(id);
+        this.showDeleteModal = false;
+        this.$router.push("/tracks");
+      } catch (err) {
+        this.editError = err?.response?.data?.message || "Delete failed.";
+      } finally {
+        this.deleting = false;
+      }
+    },
   },
   async mounted() {
     await this.load();
@@ -573,9 +729,10 @@ export default {
 <style scoped>
 .track-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 420px) 1fr;
-  gap: 3rem;
-  padding: 1.1rem 1.1rem 1.35rem;
+  grid-template-columns: minmax(280px, 480px) minmax(320px, 1fr);
+  gap: 3.4rem;
+  align-items: start;
+  padding: 1.35rem 1.35rem 1.5rem;
   border: 1px solid #d9e5f7;
   border-radius: 16px;
   background:
@@ -583,11 +740,16 @@ export default {
     linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
-.layout-left { min-width: 0; }
+.layout-left {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
 
 .detail-cover {
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   border-radius: 12px;
   border: 1px solid #c7d7ef;
   box-shadow: 0 14px 24px rgba(22, 42, 78, 0.1);
@@ -596,29 +758,37 @@ export default {
   object-fit: cover;
 }
 
-.meta-box {
-  margin-top: 0.85rem;
-  max-width: 420px;
-  border: 1px solid #d6e5fc;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #f8fbff 0%, #f3f8ff 100%);
-  padding: 0.75rem 0.85rem;
-}
-
-.meta-row {
+.detail-facts {
+  max-width: 480px;
   display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 0.5rem;
-  font-size: 0.94rem;
-  color: #0f172a;
-  padding: 0.25rem 0;
+  gap: 0.22rem;
+  padding: 0.2rem 0.1rem 0.05rem;
 }
 
-.meta-key { font-weight: 700; color: #334155; }
+.fact-row {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.95rem;
+  color: #0f172a;
+  padding: 0.1rem 0;
+}
+
+.fact-key { font-weight: 700; color: #334155; }
+.fact-val { color: #0f172a; }
+.album-link {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.album-link:hover {
+  text-decoration: underline;
+}
 
 .layout-right {
   min-width: 0;
-  padding: 0.7rem 0.6rem;
+  padding: 0.45rem 0.1rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -662,8 +832,74 @@ export default {
 }
 
 .after-player { margin-top: 0.9rem; }
-.quality-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
-.quality-btn { min-width: 180px; }
+.album-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0f172a;
+  background: #ffffff;
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.album-cta:hover {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.cart-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.28);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.cart-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(29, 78, 216, 0.35);
+  filter: saturate(1.08);
+}
+
+.cart-cta:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cart-cta:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+
+.cart-cta:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cart-cta__icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.2);
+}
 
 .card.card-body {
   border: 1px solid #d7e4f7;
@@ -715,13 +951,30 @@ export default {
   border-radius: 10px;
 }
 
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.delete-modal {
+  width: min(560px, 96vw);
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+}
+
 @media (max-width: 992px) {
   .track-layout {
     grid-template-columns: 1fr;
     padding: 0.9rem;
     gap: 1.5rem;
   }
-  .detail-cover, .meta-box, .player-wrap {
+  .detail-cover, .detail-facts, .player-wrap {
     max-width: 100%;
   }
   .detail-title {

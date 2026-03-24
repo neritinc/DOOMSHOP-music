@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         DB::table('liveshow_links')->truncate();
         DB::table('recommendation_links')->truncate();
         DB::table('tracks')->truncate();
+        DB::table('albums')->truncate();
         DB::table('artists')->truncate();
         DB::table('genres')->truncate();
         DB::table('users')->truncate();
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             GenreSeeder::class,
             ArtistSeeder::class,
+            AlbumSeeder::class,
             TrackSeeder::class,
             LiveshowLinkSeeder::class,
             RecommendationLinkSeeder::class,

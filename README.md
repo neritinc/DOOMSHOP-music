@@ -1,45 +1,58 @@
 # DOOMSHOP-music
 
-## Quick Setup (Windows)
+Egyszeru, gyors lepesek a projekthez.
 
-Run one command from the project root:
+**Gyors setup (Windows)**
 
+1. A projekt gyokerben futtasd:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-What it does:
-- installs server/client dependencies
-- creates `server/.env` (if missing)
-- generates Laravel app key
-- runs migrations
-- creates storage symlink
-- auto-detects `ffmpeg` / `ffprobe` and writes them into `server/.env` when found
+Ez ezt csinalja:
+- telepiti a server es client fuggosegeket
+- letrehozza a `server/.env`-et (ha nincs)
+- general Laravel app key-t
+- futtatja a migraciokat
+- letrehozza a storage symlinket
+- megprobalja megtalalni az `ffmpeg` / `ffprobe`-ot
 
-## Move To Another PC (Keep Everything)
+**Inditas**
 
-To keep all songs, covers, and custom previews, move these together:
+1. Backend:
+```powershell
+cd server
+composer run dev
+```
 
-1. Source code (repo)
-2. Database dump (`.sql`)
-3. Media files in `server/storage/app/public/`:
-   - `tracks/`
-   - `previews/`
-   - `track-covers/`
-4. Preview mapping file: `server/database/csv/track_previews.csv`
+2. Frontend:
+```powershell
+cd client
+npm run dev
+```
 
-### 1) Clone and setup
+Telefonos megnyitas:
+```powershell
+npm run dev -- --host
+```
 
+**Masik gepre koltozes (adatokkal egyutt)**
+
+Vidd magaddal ezeket:
+1. A repot
+2. DB dumpot (`.sql`)
+3. Media fajlokat: `server/storage/app/public/`
+4. Preview mapping fajlt: `server/database/csv/track_previews.csv`
+
+Majd:
+1. Klonozo parancs + setup:
 ```powershell
 git clone <your-repo-url>
 cd DOOMSHOPRECORDS
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-### 2) Configure `server/.env`
-
-`server/.env` must point to the MySQL database on the new machine:
-
+2. `server/.env` beallitas:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -49,30 +62,15 @@ DB_USERNAME=root
 DB_PASSWORD=your_password
 ```
 
-If needed:
-
-```powershell
-cd server
-copy .env.example .env
-php artisan key:generate
-```
-
-### 3) Restore database
-
-Import your SQL dump with dbForge/phpMyAdmin, or CLI:
-
+3. DB visszatoltes:
 ```powershell
 mysql -u root -p doomshop < C:\path\to\backup.sql
 ```
 
-### 4) Restore media files
-
-If media is not in git (or incomplete), copy back:
-
+4. Media fajlok visszamasolasa:
 `server/storage/app/public/` (tracks, previews, track-covers)
 
-### 5) Laravel sync
-
+5. Laravel sync:
 ```powershell
 cd server
 php artisan storage:link
@@ -80,23 +78,12 @@ php artisan migrate
 php artisan optimize:clear
 ```
 
-If you want to rebuild from seed files (not from SQL import), run:
-
+Ha seedelesbol akarod ujraepiteni (torli a DB-t):
 ```powershell
 php artisan migrate:fresh --seed
 ```
 
-Note: `migrate:fresh --seed` wipes imported DB data and rebuilds from seed/CSV.
-
-### 6) Frontend
-
-```powershell
-cd client
-npm install
-npm run dev
-```
-
-## GitHub Commit With Songs/Uploads Included
+**GitHub commit media fajlokkal**
 
 ```powershell
 cd server
@@ -112,6 +99,16 @@ git commit -m "Update tracks, previews, covers, and mappings"
 git push
 ```
 
-Notes:
-- `server/public/storage` is a symlink and is not required in git.
-- If files become very large, use Git LFS for media files.
+Megjegyzesek:
+- `server/public/storage` symlink, nem kell gitbe.
+- Ha a media nagy, hasznalj Git LFS-t.
+
+
+
+# WAMP KONFIGURÁCIÓ
+php.ini
+```ini
+upload_max_filesize = 64M
+post_max_size = 64M
+memory_limit = 256M
+```

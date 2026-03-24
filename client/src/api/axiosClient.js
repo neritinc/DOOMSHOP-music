@@ -16,6 +16,9 @@ const apiClient = axios.create({
 // Lefut minden egyes kérés előtt
 apiClient.interceptors.request.use(
   (config) => {
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     const token = useUserLoginLogoutStore().token; // Vagy a Pinia store-ból
     // const token = "";
     if (token) {
@@ -40,7 +43,7 @@ apiClient.interceptors.response.use(
     // Ha a szerver válaszolt
     if (error.response) {
       const status = error.response.status;
-      let message = error.response.data.message || "Hiba történt";
+      let message = error.response.data.message || "An error occurred";
 
       // 1. Speciális eset: 422 Unprocessable Entity (Validációs hiba)
       if (status === 422) {
@@ -61,10 +64,9 @@ apiClient.interceptors.response.use(
       if (status === 500) {
         // Megnézzük, hogy a szerver üzenete tartalmazza-e a MySQL 1451-es kódját
         if (message.includes("1451")) {
-          message =
-          "A sor nem törölhető, mert már szerepel egy másik táblában!";
+          message = "The record cannot be deleted because it is referenced in another table.";
         } else {
-          message = "Szerver oldali hiba történt a művelet során.";
+          message = "A server-side error occurred during the operation.";
         }
       }
       
@@ -73,7 +75,7 @@ apiClient.interceptors.response.use(
       toastStore.show("Error");
     } else {
       // Hálózati hiba (nincs válasz)
-      toastStore.messages.push("A szerver nem elérhető.");
+      toastStore.messages.push("The server is not reachable.");
       toastStore.show("Error");
     }
 
@@ -82,3 +84,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+

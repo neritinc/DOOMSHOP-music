@@ -24,9 +24,9 @@ class StoreUserRequest extends FormRequest
         return [
             'name'     => 'required|string|unique:users,name|max:255',
             'email'    => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8',
-            // Itt a változtatás:
-            'role'     => 'nullable|integer|between:1,3'
+            'password' => 'required|string',
+            // Itt a változtatás
+            'role'     => 'nullable|integer|between:1,3' //role kihagyható, de ha meg van adva, akkor csak 1, 2 vagy 3 lehet
 
         ];
     }
@@ -35,22 +35,22 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'     => 'A név megadása kötelező.',
-            'name.string'       => 'A név csak szöveges formátumú lehet.',
-            'name.unique'      => 'Ez a név már használatban van.',
-            'name.max'          => 'A név nem lehet hosszabb 255 karakternél.',
+        'name.required'     => 'The name field is required.',
+        'name.string'       => 'The name must be a string.',
+        'name.unique'       => 'This name is already in use.',
+        'name.max'          => 'The name may not be greater than 255 characters.',
 
-            'email.required'    => 'Az e-mail cím megadása kötelező.',
-            'email.email'       => 'Érvényes e-mail címet kell megadni.',
-            'email.unique'      => 'Ez az e-mail cím már használatban van.',
-            'email.max'         => 'Az e-mail cím nem lehet hosszabb 255 karakternél.',
+        'email.required'    => 'The email field is required.',
+        'email.email'       => 'Please provide a valid email address.',
+        'email.unique'      => 'This email is already in use.',
+        'email.max'         => 'The email may not be greater than 255 characters.',
 
-            'password.required' => 'A jelszó megadása kötelező.',
-            'password.string'   => 'A jelszó formátuma érvénytelen.',
-            'password.min'      => 'A jelszónak legalább 8 karakterből kell állnia.',
+        'password.required' => 'The password field is required.',
+        'password.string'   => 'The password format is invalid.',
+        'password.min'      => 'The password must be at least 8 characters.',
 
-            'role.integer' => 'A szerepkörnek számnak kell lennie.',
-            'role.between' => 'A szerepkör értéke csak 1 és 3 közötti szám lehet.',
-        ];
+        'role.integer'      => 'The role must be a number.',
+        'role.between'      => 'The role must be a number between 1 and 3.',
+            ];
     }
 }

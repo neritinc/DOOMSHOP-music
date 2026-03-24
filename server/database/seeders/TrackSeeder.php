@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Helpers\CsvReader;
 use App\Jobs\GenerateTrackPreview;
+use App\Models\Album;
 use App\Models\Track;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -60,9 +61,16 @@ class TrackSeeder extends Seeder
         foreach ($rows as $row) {
             $id = (int) $this->value($row, 'id', 0);
             $genreId = (int) $this->value($row, 'genre_id', 0);
+            $albumId = (int) $this->value($row, 'album_id', 0);
             $title = (string) $this->value($row, 'track_title', '');
             $releaseDateRaw = trim((string) $this->value($row, 'release_date', ''));
-            $releaseDate = $releaseDateRaw === '' ? null : str_replace('.', '-', $releaseDateRaw);
+            $releaseDate = null;
+            if ($releaseDateRaw !== '') {
+                $normalizedDate = str_replace('.', '-', $releaseDateRaw);
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalizedDate)) {
+                    $releaseDate = $normalizedDate;
+                }
+            }
             $bpm = (int) $this->value($row, 'bpm_value', 0);
             $trackLength = (int) $this->value($row, 'track_length', 0);
             $trackCover = $this->value($row, 'track_cover');
@@ -73,10 +81,17 @@ class TrackSeeder extends Seeder
                 continue;
             }
 
+            $resolvedAlbumId = null;
+            if ($albumId > 0) {
+                $exists = Album::query()->where('id', $albumId)->exists();
+                $resolvedAlbumId = $exists ? $albumId : null;
+            }
+
             $track = Track::query()->updateOrCreate(
                 ['id' => $id],
                 [
                     'genre_id' => $genreId,
+                    'album_id' => $resolvedAlbumId,
                     'track_title' => $title,
                     'bpm_value' => $bpm,
                     'release_date' => $releaseDate,

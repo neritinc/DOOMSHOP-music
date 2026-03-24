@@ -19,6 +19,7 @@ class CartItemFactory extends Factory
         return [
             'cart_id' => Cart::factory(),
             'track_id' => Track::factory(),
+            'album_id' => null,
             'pcs' => fake()->numberBetween(1, 5),
         ];
     }

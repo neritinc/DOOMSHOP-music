@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-// import { useToastStore } from "@/stores/toastStore";
 import { useSearchStore } from "./searchStore";
 import { useToastStore } from "./toastStore";
 import service from "@/api/userService";
@@ -36,7 +35,6 @@ export const useUserStore = defineStore("user", {
     // READ - Összes adat lekérése
 
     async getAllSortSearch(column = "id", direction = null) {
-      console.log("sort user");
 
       //   const toast = useToastStore();
       this.loading = true;
@@ -89,7 +87,6 @@ export const useUserStore = defineStore("user", {
       try {
         const response = await service.getById(id);
         this.item = response.data;
-        console.log("user adatmódosítás", response.data);
       } catch (err) {
         this.error = err;
         throw err;
@@ -103,7 +100,7 @@ export const useUserStore = defineStore("user", {
       this.loading = true;
       this.error = null;
       try {
-        const newItem = await service.create(data);
+        await service.create(data);
         const response = await service.getAllSortSearch(
           this.sortColumn,
           this.sortDirection,
@@ -116,7 +113,6 @@ export const useUserStore = defineStore("user", {
       } catch (err) {
         this.error = err;
         throw err;
-        return false;
       } finally {
         this.loading = false;
       }
@@ -127,7 +123,7 @@ export const useUserStore = defineStore("user", {
       this.loading = true;
       this.error = null;
       try {
-        const newItem = await service.create(data);
+        await service.create(data);
         const toast = useToastStore();
         toast.messages.push("User sikeresen létrehozva!");
         toast.show("Success");
@@ -135,7 +131,6 @@ export const useUserStore = defineStore("user", {
       } catch (err) {
         this.error = err;
         throw err;
-        return false;
       } finally {
         this.loading = false;
       }
@@ -146,7 +141,7 @@ export const useUserStore = defineStore("user", {
       this.loading = true;
       this.error = null;
       try {
-        const updatedItem = await service.update(id, updateData);
+        await service.update(id, updateData);
         const response = await service.getAll();
         // const response = await service.getAllSortSearch(
         //   this.sortColumn,
@@ -160,7 +155,6 @@ export const useUserStore = defineStore("user", {
       } catch (err) {
         this.error = err;
         throw err;
-        return false;
       } finally {
         this.loading = false;
       }
@@ -185,7 +179,6 @@ export const useUserStore = defineStore("user", {
       } catch (err) {
         this.error = err;
         throw err;
-        return false;
       } finally {
         this.loading = false;
       }
