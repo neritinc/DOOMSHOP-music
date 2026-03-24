@@ -46,5 +46,17 @@ export default {
 
 .breadcrumb {
   background-color: transparent;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .crumb-shell {
+    padding: 6px 10px;
+  }
+
+  .breadcrumb {
+    font-size: 0.85rem;
+  }
 }
 </style>

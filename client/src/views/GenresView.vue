@@ -353,4 +353,20 @@ export default {
   border-color: rgba(255, 255, 255, 0.42);
   color: #ffffff;
 }
+
+@media (max-width: 768px) {
+  .genre-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .genre-action-btn {
+    width: 100%;
+  }
+
+  .genre-meta {
+    min-height: 110px;
+    padding: 1rem;
+  }
+}
 </style>

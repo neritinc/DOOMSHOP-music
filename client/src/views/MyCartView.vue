@@ -460,4 +460,25 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .item-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .item-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .price-block {
+    justify-items: start;
+  }
+
+  .item-cover {
+    width: 64px;
+    height: 64px;
+  }
+}
 </style>

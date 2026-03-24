@@ -475,4 +475,24 @@ export default {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .artist-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .update-image-btn,
+  .delete-artist-btn {
+    width: 100%;
+  }
+
+  .artist-cover {
+    width: 82%;
+  }
+
+  .artist-meta {
+    min-height: auto;
+  }
+}
 </style>

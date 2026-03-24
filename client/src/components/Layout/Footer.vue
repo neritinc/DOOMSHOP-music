@@ -206,4 +206,31 @@ export default {};
     align-items: center;
   }
 }
+
+@media (max-width: 640px) {
+  .footer-shell {
+    padding: 20px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-card {
+    padding: 14px;
+  }
+
+  .footer-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer-input button {
+    width: 100%;
+  }
+
+  .footer-title {
+    font-size: 1.35rem;
+  }
+}
 </style>

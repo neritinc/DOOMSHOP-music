@@ -28,7 +28,7 @@
             <option v-for="bpm in bpmFilterOptions" :key="`filter-bpm-${bpm}`" :value="String(bpm)">{{ bpm }}</option>
           </select>
         </div>
-        <div class="col-md-4 d-flex gap-2">
+        <div class="col-md-4 d-flex gap-2 filter-actions">
           <button class="btn btn-outline-secondary" type="button" @click="shuffleTracks">
             Shuffle order
           </button>
@@ -1423,6 +1423,36 @@ export default {
 @media (max-width: 992px) {
   .card.card-body {
     padding: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .filter-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .track-submit-sticky {
+    position: static;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .track-cover {
+    width: 86%;
+  }
+
+  .track-title {
+    font-size: 1.05rem;
+    min-height: auto;
+  }
+
+  .track-artist {
+    min-height: auto;
   }
 }
 </style>

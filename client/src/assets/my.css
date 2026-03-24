@@ -79,6 +79,19 @@ h6,
   backdrop-filter: blur(10px);
 }
 
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .card,
 .table,
 .modal-content,
@@ -183,5 +196,48 @@ a:hover {
 @media (max-width: 768px) {
   .app-main {
     border-radius: 16px;
+    padding: 1rem !important;
+  }
+
+  .app-shell {
+    margin: 0 6px;
+  }
+
+  .card,
+  .table,
+  .modal-content {
+    width: 100%;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .app-shell {
+    margin: 0 4px;
+  }
+
+  .app-main {
+    padding: 0.85rem !important;
+  }
+
+  .card,
+  .modal-content,
+  .dropdown-menu {
+    border-radius: 12px;
+  }
+
+  .table {
+    font-size: 0.92rem;
+  }
+
+  h1 {
+    font-size: clamp(1.4rem, 6vw, 1.9rem);
+  }
+
+  h2 {
+    font-size: clamp(1.2rem, 5vw, 1.6rem);
   }
 }

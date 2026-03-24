@@ -100,7 +100,7 @@ export default {
         }
 
         if (host.includes("soundcloud.com")) {
-          return `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&color=%230f172a&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&visual=true`;
+          return `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&color=%23ff7a18&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&show_artwork=true&visual=false`;
         }
       } catch (_err) {
       }

@@ -89,13 +89,13 @@ export default {
         if (host.includes("soundcloud.com")) {
           return {
             kind: "soundcloud",
-            embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&color=%230f172a&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true`,
+            embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(raw)}&color=%23ff7a18&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&show_artwork=true&visual=false`,
           };
         }
 
         if (host.includes("youtu.be")) {
           const id = url.pathname.replace("/", "").trim();
-          return { kind: "youtube", embedUrl: id ? `https://www.youtube.com/embed/${id}` : "" };
+          return { kind: "youtube", embedUrl: id ? `https://www.syoutube.com/embed/${id}` : "" };
         }
 
         if (host.includes("youtube.com")) {
