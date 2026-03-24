@@ -1,114 +1,71 @@
-# DOOMSHOP-music
+# Zenei Webshop – Online Értékesítő Webalkalmazás
 
-Egyszeru, gyors lepesek a projekthez.
+Ez a projekt egy **zenéket és zenei tartalmakat forgalmazó webshop** számára készült webalkalmazás, amely lehetővé teszi a felhasználók számára az online zeneböngészést és vásárlást, valamint külön adminisztrációs felületet biztosít az oldal üzemeltetőinek a zenék, rendelések és felhasználók kezelésére.
 
-**Gyors setup (Windows)**
+A rendszer **Laravel (backend API)** és **Vue.js (frontend)** technológiákra épül.
 
-1. A projekt gyokerben futtasd:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
-```
+---
 
-Ez ezt csinalja:
-- telepiti a server es client fuggosegeket
-- letrehozza a `server/.env`-et (ha nincs)
-- general Laravel app key-t
-- futtatja a migraciokat
-- letrehozza a storage symlinket
-- megprobalja megtalalni az `ffmpeg` / `ffprobe`-ot
+## Fő funkciók
 
-**Inditas**
+### Felhasználói (User) funkciók
 
-1. Backend:
-```powershell
-cd server
-composer run dev
-```
+* Regisztráció és bejelentkezés
+* Zenék böngészése kategóriák (pl. műfajok) szerint
+* Zenék keresése és szűrése (**ár, műfaj, előadó**)
+* Zene részleteinek megtekintése (**leírás, ár, előadó, hossz**)
+* Zenék kosárba helyezése
+* Kosár tartalmának módosítása (**mennyiség, törlés**)
+* Online rendelés leadása
+* Zeneértékelés leadása vásárlás után (**szöveges vélemény**)
 
-2. Frontend:
-```powershell
-cd client
-npm run dev
-```
+---
 
-Telefonos megnyitas:
-```powershell
-npm run dev -- --host
-```
+### Admin funkciók
 
-**Masik gepre koltozes (adatokkal egyutt)**
+* Admin felület bejelentkezés után
+* Új zenék feltöltése
+* Zenék szerkesztése és törlése
+* Kategóriák (**műfajok**) kezelése
+* Tartalomkezelés
+* Felhasználók kezelése
 
-Vidd magaddal ezeket:
-1. A repot
-2. DB dumpot (`.sql`)
-3. Media fajlokat: `server/storage/app/public/`
-4. Preview mapping fajlt: `server/database/csv/track_previews.csv`
+---
 
-Majd:
-1. Klonozo parancs + setup:
-```powershell
-git clone <your-repo-url>
-cd DOOMSHOPRECORDS
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
-```
+## Rendelési folyamat működése
 
-2. `server/.env` beallitas:
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=doomshop
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
+* A felhasználó zenéket ad a kosárhoz
+* A rendszer ellenőrzi az elérhetőséget
 
-3. DB visszatoltes:
-```powershell
-mysql -u root -p doomshop < C:\path\to\backup.sql
-```
+A rendelés leadásakor a rendszer:
 
-4. Media fajlok visszamasolasa:
-`server/storage/app/public/` (tracks, previews, track-covers)
+* elmenti a rendelés adatait
+* biztosítja a hozzáférést a megvásárolt zenékhez
 
-5. Laravel sync:
-```powershell
-cd server
-php artisan storage:link
-php artisan migrate
-php artisan optimize:clear
-```
+*Egy zene csak elérhető állapot esetén vásárolható meg.*
 
-Ha seedelesbol akarod ujraepiteni (torli a DB-t):
-```powershell
-php artisan migrate:fresh --seed
-```
+---
 
-**GitHub commit media fajlokkal**
+## Értékelési rendszer
 
-```powershell
-cd server
-powershell -ExecutionPolicy Bypass -File .\export-music-data.ps1
-cd ..
-git add .
-git add server/storage/app/public/tracks
-git add server/storage/app/public/previews
-git add server/storage/app/public/track-covers
-git add server/database/csv/track_previews.csv
-git add server/database/backups
-git commit -m "Update tracks, previews, covers, and mappings"
-git push
-```
+* Az értékelések a zene adatlapján jelennek meg
+* Az értékelések tartalmazzák:
 
-Megjegyzesek:
-- `server/public/storage` symlink, nem kell gitbe.
-- Ha a media nagy, hasznalj Git LFS-t.
+  * **szöveges véleményt**
 
+---
 
+## Technológia
 
-# WAMP KONFIGURÁCIÓ
-php.ini
-```ini
-upload_max_filesize = 64M
-post_max_size = 64M
-memory_limit = 256M
-```
+* **Backend:** Laravel (REST API)
+* **Frontend:** Vue.js
+* **Adatbázis:** MySQL
+* **Hitelesítés:** Laravel Auth / Sanctum
+* **Időzített feladatok:** Laravel Scheduler
+* **Email küldés:** Laravel Mail
+
+---
+
+## Projekt célja
+
+A projekt célja egy **modern, átlátható és könnyen használható zenei webshop** létrehozása, amely lehetővé teszi a gyors online vásárlást, egyszerűsíti a rendeléskezelést, és hatékony eszközt biztosít az adminisztrátorok számára a mindennapi működéshez.
