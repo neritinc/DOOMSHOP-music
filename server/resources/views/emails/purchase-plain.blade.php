@@ -1,17 +1,17 @@
-﻿Letoltesi linkek
-================
+﻿Your Doomshop download links
+============================
 
-Szia{{ isset($name) && $name !== '' ? ' ' . $name : '' }}!
+Hi{{ isset($name) && $name !== '' ? ' ' . $name : '' }},
 
-Koszonjuk a vasarlast! Az alabbi linkekkel tudod letolteni a teljes hanganyagot.
+Thanks for your purchase! Use the links below to download your full audio files.
 
 @if (!empty($items))
 @foreach ($items as $item)
 - {{ ucfirst($item['type'] ?? 'item') }}: {{ $item['title'] ?? '' }}
-  Letoltes: {{ $item['url'] ?? '' }}
+  Download: {{ $item['url'] ?? '' }}
 @endforeach
 @endif
 
-A linkek ervenyesek: {{ $expires_at ?? '' }}
+Links valid until: {{ $expires_at ?? '' }}
 
-Ha nem te kerted, nyugodtan figyelmen kivul hagyhatod.
+If you did not request this email, you can safely ignore it.

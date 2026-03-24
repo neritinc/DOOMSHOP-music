@@ -8,12 +8,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
 
 class DownloadController extends Controller
 {
-    public function download(string $type, int $id): JsonResponse|StreamedResponse
+    public function download(string $type, int $id): JsonResponse|StreamedResponse|BinaryFileResponse
     {
         if ($type === 'track') {
             $track = Track::find($id);

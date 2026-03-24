@@ -57,3 +57,39 @@ TrackController.php
 
 nem funkció, csak fallback név
 a lejátszás a fájl tartalmától függ, nem a .bin‑től
+
+
+
+
+
+Honnan tudja, hogy a teljes fájlt kell küldeni?
+
+A letöltés nem a preview-t használja, hanem a track_path mezőt (teljes fájl).
+A DownloadController ezt a fájlt streameli letöltésre.
+Ez a sor dönt róla:
+resolveTrackSourcePath($track->track_path) → ez mindig a teljes feltöltött file.
+Hogyan kapcsolja a userhez?
+
+A checkout csak bejelentkezett user mellett fut: POST /api/my-carts/{id}/checkout
+A controller a $request->user() alapján dolgozik.
+A kosár csak a saját userhez tartozó lehet:
+->where('id', $id)->where('user_id', $user->id)
+Email célzás
+
+A mail cím a bejelentkezett user emailje:
+->to($user->email)
+Ezért biztos, hogy annak a usernek megy ki, aki a kosarat checkoutolta.
+Fontos korlát
+
+Mivel signed URL van (nincs token tábla), a link nem kötődik userhez DB-ben, csak időben lejár.
+Tehát ha valaki továbbküldi a linket, bárki letöltheti a lejáratig.
+Ha szeretnéd, vissza tudjuk kötni userhez is (token táblával), de te azt kérted, hogy ne legyen extra tábla.
+
+Ha mehet a logó/színvilág:
+
+kérlek adj logó fájlt (vagy URL), és mondd meg a fő színeket.
+
+
+
+
+

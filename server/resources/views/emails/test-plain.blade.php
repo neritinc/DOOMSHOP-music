@@ -7,7 +7,5 @@ Ez egy teszt email a Doomshop rendszerbol.
 Idopont: {{ $timestamp ?? now()->toDateTimeString() }}
 
 @if (!empty($actionUrl))
-Nyisd meg: {{ $actionUrl }}
+    Nyisd meg: {{ $actionUrl }}
 @endif
-
-Ha nem te kerted, nyugodtan figyelmen kivul hagyhatod.
