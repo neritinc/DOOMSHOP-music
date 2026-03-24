@@ -17,7 +17,6 @@ A rendszer **Laravel (backend API)** és **Vue.js (frontend)** technológiákra 
 * Zenék kosárba helyezése
 * Kosár tartalmának módosítása (**mennyiség, törlés**)
 * Online rendelés leadása
-* Zeneértékelés leadása vásárlás után (**szöveges vélemény**)
 
 ---
 
