@@ -469,7 +469,7 @@ class TrackController extends Controller
         if ($extension === '') {
             $extension = strtolower((string) pathinfo($sourcePath, PATHINFO_EXTENSION));
         }
-        if ($extension === '') {
+        if ($extension === '' || $extension === 'bin') {
             $extension = 'mp3';
         }
 

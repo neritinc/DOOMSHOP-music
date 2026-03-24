@@ -6,7 +6,35 @@
       <div class="panel">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="section-title m-0">Cart Items</div>
-        <span class="badge text-bg-dark">{{ selectedCartItems.length }} items</span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge text-bg-dark">{{ selectedCartItems.length }} items</span>
+          <button
+            class="btn btn-primary btn-sm"
+            type="button"
+            :disabled="!cartId || selectedCartItems.length === 0 || checkingOut"
+            @click="checkoutCart"
+          >
+            {{ checkingOut ? "Sending..." : "Vasarlas" }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="checkoutError" class="alert alert-danger py-2 mb-2">{{ checkoutError }}</div>
+      <div v-if="checkoutResult" class="alert alert-success py-2 mb-2">
+        Email elkuldve. Letoltesi linkek:
+        <div class="download-links">
+          <a
+            v-for="(item, idx) in checkoutResult.download_items"
+            :key="idx"
+            class="download-link"
+            :href="item.url"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ item.type }}: {{ item.title }}
+          </a>
+        </div>
+        <div class="small text-muted">Ervenyes: {{ checkoutResult.expires_at }}</div>
       </div>
 
       <div v-if="!cartId" class="empty-state">Select a cart to see its items.</div>
@@ -85,6 +113,9 @@ export default {
       itemToDelete: null,
       deletingItem: false,
       deleteError: "",
+      checkingOut: false,
+      checkoutError: "",
+      checkoutResult: null,
     };
   },
   computed: {
@@ -105,7 +136,10 @@ export default {
       this.cartItems = itemsRes.data || [];
       this.tracks = tracksRes.data || [];
       this.albums = albumsRes.data || [];
-      if (!this.cartId && this.carts.length > 0) this.cartId = this.carts[0].id;
+      const cartIds = new Set((this.carts || []).map((c) => Number(c.id)));
+      if (!this.cartId || !cartIds.has(Number(this.cartId))) {
+        this.cartId = this.carts.length > 0 ? this.carts[0].id : null;
+      }
     },
     itemLabel(item) {
       if (item.track_id) {
@@ -208,6 +242,21 @@ export default {
         this.deleteError = this.extractErrorMessage(err, "Could not delete cart item.");
       } finally {
         this.deletingItem = false;
+      }
+    },
+    async checkoutCart() {
+      if (!this.cartId || this.selectedCartItems.length === 0) return;
+      this.checkingOut = true;
+      this.checkoutError = "";
+      this.checkoutResult = null;
+      try {
+        const res = await service.checkoutMyCart(this.cartId);
+        this.checkoutResult = res?.data || null;
+        await this.load();
+      } catch (err) {
+        this.checkoutError = this.extractErrorMessage(err, "Nem sikerult elkuldeni az emailt.");
+      } finally {
+        this.checkingOut = false;
       }
     },
     extractErrorMessage(err, fallback) {
@@ -375,6 +424,18 @@ export default {
   padding: 0.8rem;
   color: #64748b;
   background: #f8fafc;
+}
+
+.download-links {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.download-link {
+  color: #1d4ed8;
+  text-decoration: underline;
+  font-weight: 600;
 }
 
 .modal-backdrop-custom {

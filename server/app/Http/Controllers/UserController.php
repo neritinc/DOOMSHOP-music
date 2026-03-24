@@ -74,6 +74,7 @@ class UserController extends Controller
                     'cart-items:self:post',
                     'cart-items:self:patch',
                     'cart-items:self:delete',
+                    'checkout:self:post',
                 ];
                 break;
             default:

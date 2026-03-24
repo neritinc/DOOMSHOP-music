@@ -16,6 +16,9 @@ export default {
   deleteMyCartItem(id) {
     return apiClient.delete(`/my-cart-items/${id}`);
   },
+  checkoutMyCart(id) {
+    return apiClient.post(`/my-carts/${id}/checkout`);
+  },
   allCarts() {
     return apiClient.get("/carts");
   },

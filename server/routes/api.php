@@ -4,6 +4,8 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\GenreController;
 use App\Http\Controllers\LiveshowLinkController;
 use App\Http\Controllers\RecommendationLinkController;
@@ -148,6 +150,16 @@ Route::post('my-carts', [CartController::class, 'storeSelf'])
     ->middleware(['auth:sanctum', 'ability:carts:self:post']);
 Route::delete('my-carts/{id}', [CartController::class, 'destroySelf'])
     ->middleware(['auth:sanctum', 'ability:carts:self:delete']);
+Route::post('my-carts/{id}/checkout', [CheckoutController::class, 'checkout'])
+    ->middleware(['auth:sanctum', 'ability:checkout:self:post']);
+//endregion
+
+//region Downloads
+Route::get('download/{type}/{id}', [DownloadController::class, 'download'])
+    ->whereIn('type', ['track', 'album'])
+    ->whereNumber('id')
+    ->name('download.signed')
+    ->middleware('signed');
 //endregion
 
 //region Cart Items
