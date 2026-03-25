@@ -3,73 +3,78 @@
     <h2 class="h5 m-0 page-title">My Cart</h2>
 
     <div class="layout-grid">
+      <div class="panel checkout-panel">
+        <div class="section-title m-0 mb-2">Checkout</div>
+        <p class="text-muted mb-3">
+          You have <strong>{{ selectedCartItems.length }}</strong> items in your cart.
+        </p>
+        <button
+          class="btn btn-primary btn-lg w-100"
+          type="button"
+          :disabled="!cartId || selectedCartItems.length === 0 || checkingOut"
+          @click="openCheckoutModal"
+        >
+          {{ checkingOut ? "Sending..." : "Checkout" }}
+        </button>
+      </div>
+
       <div class="panel">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="section-title m-0">Cart Items</div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title m-0">Cart Items</div>
           <span class="badge text-bg-dark">{{ selectedCartItems.length }} items</span>
-          <button
-            class="btn btn-primary btn-sm"
-            type="button"
-            :disabled="!cartId || selectedCartItems.length === 0 || checkingOut"
-            @click="checkoutCart"
-          >
-            {{ checkingOut ? "Sending..." : "Vasarlas" }}
-          </button>
         </div>
-      </div>
 
-      <div v-if="checkoutError" class="alert alert-danger py-2 mb-2">{{ checkoutError }}</div>
-      <div v-if="checkoutResult" class="alert alert-success py-2 mb-2">
-        Email elkuldve. Letoltesi linkek:
-        <div class="download-links">
-          <a
-            v-for="(item, idx) in checkoutResult.download_items"
-            :key="idx"
-            class="download-link"
-            :href="item.url"
-            target="_blank"
-            rel="noopener"
-          >
-            {{ item.type }}: {{ item.title }}
-          </a>
+        <div v-if="checkoutError" class="alert alert-danger py-2 mb-2">{{ checkoutError }}</div>
+        <div v-if="checkoutResult" class="alert alert-success py-2 mb-2">
+          Email sent. Download links:
+          <div class="download-links">
+            <a
+              v-for="(item, idx) in checkoutResult.download_items"
+              :key="idx"
+              class="download-link"
+              :href="item.url"
+              target="_blank"
+              rel="noopener"
+            >
+              {{ item.type }}: {{ item.title }}
+            </a>
+          </div>
+          <div class="small text-muted">Valid until: {{ checkoutResult.expires_at }}</div>
         </div>
-        <div class="small text-muted">Ervenyes: {{ checkoutResult.expires_at }}</div>
-      </div>
 
-      <div v-if="!cartId" class="empty-state">Select a cart to see its items.</div>
-      <div v-else-if="selectedCartItems.length === 0" class="empty-state">This cart is currently empty.</div>
-      <div v-else class="item-list">
-        <div v-for="(item, idx) in selectedCartItems" :key="item.id || idx" class="item-row">
-          <img
-            class="item-cover"
-            :src="itemCover(item)"
-            :alt="itemLabel(item)"
-            @error="onItemImgError"
-          />
-          <div class="item-main">
-            <strong>{{ itemLabel(item) }}</strong>
-            <small class="text-muted">Type: {{ item.track_id ? "Track" : "Album" }}</small>
-            <div v-if="item.album_id && albumTracks(item).length > 0" class="album-track-summary">
-              <small
-                v-for="track in albumTracks(item)"
-                :key="track.id || track.track_id"
-                class="album-track-line"
-              >
-                {{ track.track_title }}
-              </small>
+        <div v-if="!cartId" class="empty-state">Select a cart to see its items.</div>
+        <div v-else-if="selectedCartItems.length === 0" class="empty-state">This cart is currently empty.</div>
+        <div v-else class="item-list">
+          <div v-for="(item, idx) in selectedCartItems" :key="item.id || idx" class="item-row">
+            <img
+              class="item-cover"
+              :src="itemCover(item)"
+              :alt="itemLabel(item)"
+              @error="onItemImgError"
+            />
+            <div class="item-main">
+              <strong>{{ itemLabel(item) }}</strong>
+              <small class="text-muted">Type: {{ item.track_id ? "Track" : "Album" }}</small>
+              <div v-if="item.album_id && albumTracks(item).length > 0" class="album-track-summary">
+                <small
+                  v-for="track in albumTracks(item)"
+                  :key="track.id || track.track_id"
+                  class="album-track-line"
+                >
+                  {{ track.track_title }}
+                </small>
+              </div>
+            </div>
+            <div class="item-actions">
+              <div class="price-block">
+                <span class="item-price">{{ formatPrice(itemUnitPrice(item)) }}</span>
+                <small class="item-price-total">Total: {{ formatPrice(itemTotalPrice(item)) }}</small>
+              </div>
+              <span class="qty-chip">x{{ Number(item.pcs || 1) }}</span>
+              <button class="btn btn-outline-danger btn-sm" type="button" @click="openDeleteModal(item)">Delete</button>
             </div>
           </div>
-          <div class="item-actions">
-            <div class="price-block">
-              <span class="item-price">{{ formatPrice(itemUnitPrice(item)) }}</span>
-              <small class="item-price-total">Total: {{ formatPrice(itemTotalPrice(item)) }}</small>
-            </div>
-            <span class="qty-chip">x{{ Number(item.pcs || 1) }}</span>
-            <button class="btn btn-outline-danger btn-sm" type="button" @click="openDeleteModal(item)">Delete</button>
-          </div>
         </div>
-      </div>
       </div>
     </div>
 
@@ -92,6 +97,31 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showCheckoutModal" class="modal-backdrop-custom" @click.self="closeCheckoutModal">
+      <div class="checkout-modal card shadow">
+        <div class="card-body">
+          <h3 class="h6 mb-2">Where should we send the email?</h3>
+          <p class="text-muted mb-3">We prefill your account email, but you can change it.</p>
+          <input
+            class="form-control"
+            type="email"
+            v-model.trim="checkoutEmail"
+            placeholder="email@domain.com"
+            autocomplete="email"
+          />
+          <div v-if="checkoutEmailError" class="text-danger small mt-2">{{ checkoutEmailError }}</div>
+          <div class="d-flex gap-2 justify-content-end mt-3">
+            <button class="btn btn-outline-secondary btn-sm" type="button" :disabled="checkingOut" @click="closeCheckoutModal">
+              Cancel
+            </button>
+            <button class="btn btn-primary btn-sm" type="button" :disabled="checkingOut" @click="checkoutCart">
+              {{ checkingOut ? "Sending..." : "Send" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -100,6 +130,7 @@ import service from "@/api/cartService";
 import trackService from "@/api/trackService";
 import albumService from "@/api/albumService";
 import { storageUrl } from "@/utils/storageUrl";
+import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 
 export default {
   data() {
@@ -116,6 +147,10 @@ export default {
       checkingOut: false,
       checkoutError: "",
       checkoutResult: null,
+      showCheckoutModal: false,
+      checkoutEmail: "",
+      checkoutEmailError: "",
+      userLoginStore: useUserLoginLogoutStore(),
     };
   },
   computed: {
@@ -226,6 +261,18 @@ export default {
       this.itemToDelete = null;
       this.deleteError = "";
     },
+    openCheckoutModal() {
+      if (!this.cartId || this.selectedCartItems.length === 0) return;
+      const defaultEmail = this.userLoginStore?.item?.email || "";
+      this.checkoutEmail = defaultEmail;
+      this.checkoutEmailError = "";
+      this.showCheckoutModal = true;
+    },
+    closeCheckoutModal() {
+      if (this.checkingOut) return;
+      this.showCheckoutModal = false;
+      this.checkoutEmailError = "";
+    },
     async confirmDeleteItem() {
       const id = Number(this.itemToDelete?.id || 0);
       if (!id) {
@@ -246,15 +293,20 @@ export default {
     },
     async checkoutCart() {
       if (!this.cartId || this.selectedCartItems.length === 0) return;
+      if (!this.checkoutEmail || !String(this.checkoutEmail).includes("@")) {
+        this.checkoutEmailError = "Please enter a valid email address.";
+        return;
+      }
       this.checkingOut = true;
       this.checkoutError = "";
       this.checkoutResult = null;
       try {
-        const res = await service.checkoutMyCart(this.cartId);
+        const res = await service.checkoutMyCart(this.cartId, { email: this.checkoutEmail });
         this.checkoutResult = res?.data || null;
         await this.load();
+        this.showCheckoutModal = false;
       } catch (err) {
-        this.checkoutError = this.extractErrorMessage(err, "Nem sikerult elkuldeni az emailt.");
+        this.checkoutError = this.extractErrorMessage(err, "Could not send the email.");
       } finally {
         this.checkingOut = false;
       }
@@ -283,32 +335,44 @@ export default {
 <style scoped>
 .cart-page {
   display: grid;
-  gap: 0.9rem;
+  gap: 1rem;
+  padding: 1rem 0.5rem;
+  background:
+    radial-gradient(600px 220px at 10% -20%, rgba(14, 165, 233, 0.18), transparent 65%),
+    radial-gradient(520px 260px at 95% -10%, rgba(59, 130, 246, 0.16), transparent 60%);
 }
 
 .page-title {
-  color: #0f172a;
-  font-weight: 700;
+  color: #0b2540;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .layout-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 1rem;
   align-items: start;
 }
 
 .panel {
-  border: 1px solid #d7e4f7;
-  border-radius: 12px;
-  background: #ffffff;
-  padding: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  padding: 1rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.checkout-panel {
+  position: sticky;
+  top: 90px;
 }
 
 .section-title {
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: #0b2540;
   margin-bottom: 0.7rem;
+  letter-spacing: 0.02em;
 }
 
 .form-control,
@@ -325,13 +389,14 @@ export default {
 }
 
 .btn {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 60%, #4f46e5 100%);
   border-color: #1d4ed8;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.25);
 }
 
 .badge.text-bg-dark {
@@ -341,18 +406,19 @@ export default {
 
 .item-list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.7rem;
 }
 
 .item-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.85rem;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #ffffff;
-  padding: 0.65rem 0.75rem;
+  padding: 0.8rem 0.9rem;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
 }
 
 .item-main {
@@ -380,10 +446,10 @@ export default {
 }
 
 .item-cover {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #dbe3ef;
   flex: 0 0 auto;
 }
@@ -415,14 +481,14 @@ export default {
   border: 1px solid #bfdbfe;
   background: #eff6ff;
   color: #1e3a8a;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .empty-state {
   border: 1px dashed #d1d5db;
-  border-radius: 10px;
-  padding: 0.8rem;
-  color: #64748b;
+  border-radius: 12px;
+  padding: 0.9rem;
+  color: #475569;
   background: #f8fafc;
 }
 
@@ -452,7 +518,13 @@ export default {
 .delete-modal {
   width: min(460px, 95vw);
   border: 1px solid #fecaca;
-  border-radius: 14px;
+  border-radius: 16px;
+}
+
+.checkout-modal {
+  width: min(480px, 95vw);
+  border: 1px solid #c7ddfb;
+  border-radius: 16px;
 }
 
 @media (max-width: 992px) {

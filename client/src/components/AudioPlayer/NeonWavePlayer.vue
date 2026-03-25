@@ -33,10 +33,24 @@
         </div>
       </div>
 
-      <button class="btn-mute" type="button" @click="toggleMute" :disabled="!audioSrc" aria-label="Mute/Unmute">
-        <i v-if="isMuted" class="bi bi-volume-mute-fill icon-mute"></i>
-        <i v-else class="bi bi-volume-up-fill icon-mute"></i>
-      </button>
+      <div class="volume-wrap">
+        <input
+          class="volumebar"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          :value="player.volume"
+          @input="onVolume"
+          :disabled="!audioSrc"
+          aria-label="Volume"
+          :style="{ '--vol': `${volumePercent}` }"
+        />
+        <button class="btn-mute" type="button" @click="toggleMute" :disabled="!audioSrc" aria-label="Mute/Unmute">
+          <i v-if="isMuted" class="bi bi-volume-mute-fill icon-mute"></i>
+          <i v-else class="bi bi-volume-up-fill icon-mute"></i>
+        </button>
+      </div>
     </div>
 
     <div class="status-line">
@@ -49,7 +63,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { usePlayerStore } from "@/stores/playerStore";
 
 const props = defineProps({
   track: {
@@ -58,8 +73,9 @@ const props = defineProps({
   },
 });
 
+const player = usePlayerStore();
 const audioEl = ref(null);
-const isPlaying = ref(false);
+const isPlaying = computed(() => player.isPlaying);
 const isMuted = ref(false);
 const currentTime = ref(0);
 const duration = ref(30);
@@ -82,6 +98,7 @@ const progressPercent = computed(() => {
   if (duration.value <= 0) return 0;
   return Math.max(0, Math.min(100, (currentTime.value / duration.value) * 100));
 });
+const volumePercent = computed(() => Math.round(player.volume * 100));
 
 function onLoadedMetadata() {
   const d = Number(audioEl.value?.duration || 30);
@@ -102,14 +119,14 @@ function onSeek(event) {
 function togglePlay() {
   if (!audioEl.value || !audioSrc.value) return;
 
-  if (isPlaying.value) {
+  if (player.isPlaying) {
     audioEl.value.pause();
-    isPlaying.value = false;
+    player.pause();
     return;
   }
 
   audioEl.value.play();
-  isPlaying.value = true;
+  player.play();
 }
 
 function toggleMute() {
@@ -118,13 +135,22 @@ function toggleMute() {
   audioEl.value.muted = isMuted.value;
 }
 
+function onVolume(event) {
+  const next = Number(event.target.value || 0);
+  player.setVolume(next);
+  if (audioEl.value && isMuted.value && next > 0) {
+    isMuted.value = false;
+    audioEl.value.muted = false;
+  }
+}
+
 function onEnded() {
-  isPlaying.value = false;
+  player.pause();
   currentTime.value = 0;
 }
 
 function onError() {
-  isPlaying.value = false;
+  player.pause();
   loadError.value = true;
 }
 
@@ -134,6 +160,24 @@ function formatTime(value) {
   const sec = total % 60;
   return `${min}:${String(sec).padStart(2, "0")}`;
 }
+
+watch(
+  () => props.track,
+  (track) => {
+    player.setTrack(track ?? null, false);
+    currentTime.value = 0;
+    loadError.value = false;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => player.volume,
+  (value) => {
+    if (audioEl.value) audioEl.value.volume = value;
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped>
@@ -274,6 +318,46 @@ function formatTime(value) {
 
 .icon-mute {
   font-size: 1rem;
+}
+
+.volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.volumebar {
+  width: 90px;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #38bdf8 0%,
+    #60a5fa calc(var(--vol, 100) * 1%),
+    #e3ecfb calc(var(--vol, 100) * 1%),
+    #e3ecfb 100%
+  );
+  outline: none;
+}
+
+.volumebar::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.volumebar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 
 .status-line {

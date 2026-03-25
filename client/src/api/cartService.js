@@ -16,8 +16,8 @@ export default {
   deleteMyCartItem(id) {
     return apiClient.delete(`/my-cart-items/${id}`);
   },
-  checkoutMyCart(id) {
-    return apiClient.post(`/my-carts/${id}/checkout`);
+  checkoutMyCart(id, payload = null) {
+    return apiClient.post(`/my-carts/${id}/checkout`, payload || {});
   },
   allCarts() {
     return apiClient.get("/carts");
