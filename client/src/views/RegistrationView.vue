@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="row justify-content-center">
     <div class="col-md-6">
       <h2 class="h5 mb-3">Registration</h2>
@@ -29,56 +29,25 @@
 </template>
 
 <script>
-import userService from "@/api/userService";
-import { useToastStore } from "@/stores/toastStore";
+import { storeToRefs } from "pinia";
+import { useRegistrationViewStore } from "@/stores/views/registrationViewStore";
+import { useRouter } from "vue-router";
 
 export default {
-  data() {
-    return {
-      loading: false,
-      errors: {},
-      passwordConfirm: "",
-      form: {
-        name: "",
-        email: "",
-        password: "",
-        role: 2,
-      },
+  setup() {
+    const store = useRegistrationViewStore();
+    const router = useRouter();
+    const storeRefs = storeToRefs(store);
+
+    const submit = async () => {
+      await store.submit(router);
     };
-  },
-  methods: {
-    async submit() {
-      this.loading = true;
-      this.errors = {};
-      const toastStore = useToastStore();
-      if (this.form.password !== this.passwordConfirm) {
-        this.errors.password = "Passwords do not match.";
-        toastStore.messages.push("Passwords do not match.");
-        toastStore.show("Error");
-        this.loading = false;
-        return;
-      }
-      try {
-        await userService.create(this.form);
-        toastStore.messages.push("Account created. Please log in.");
-        toastStore.show("Success");
-        this.$router.push("/login");
-      } catch (err) {
-        const apiErrors = err?.response?.data?.errors;
-        if (apiErrors) {
-          this.errors = {
-            name: apiErrors.name?.[0],
-            email: apiErrors.email?.[0],
-            password: apiErrors.password?.[0],
-          };
-        }
-        const message = err?.response?.data?.message || "Registration failed.";
-        toastStore.messages.push(message);
-        toastStore.show("Error");
-      } finally {
-        this.loading = false;
-      }
-    },
+
+    return {
+      ...storeRefs,
+      submit,
+    };
   },
 };
 </script>
+

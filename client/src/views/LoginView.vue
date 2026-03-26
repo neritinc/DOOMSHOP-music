@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="row justify-content-center">
     <div class="col-md-5">
       <h2 class="h5 mb-3">Login</h2>
@@ -13,25 +13,29 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "pinia";
+import { storeToRefs } from "pinia";
+import { useLoginViewStore } from "@/stores/views/loginViewStore";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
+import { RouterLink, useRouter } from "vue-router";
 
 export default {
-  data() {
-    return {
-      email: "admin@doomshoprecords.com",
-      password: "admin123",
+  components: { RouterLink },
+  setup() {
+    const store = useLoginViewStore();
+    const router = useRouter();
+    const { loading } = storeToRefs(useUserLoginLogoutStore());
+    const storeRefs = storeToRefs(store);
+
+    const submit = async () => {
+      await store.submit(router);
     };
-  },
-  computed: {
-    ...mapState(useUserLoginLogoutStore, ["loading"]),
-  },
-  methods: {
-    ...mapActions(useUserLoginLogoutStore, ["login"]),
-    async submit() {
-      await this.login({ email: this.email, password: this.password });
-      this.$router.push("/");
-    },
+
+    return {
+      ...storeRefs,
+      loading,
+      submit,
+    };
   },
 };
 </script>
+

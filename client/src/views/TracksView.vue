@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="h5 m-0">Tracks</h2>
@@ -11,14 +11,16 @@
           <label class="form-label mb-1">Filter by genre</label>
           <select v-model="selectedGenreFilter" class="form-select">
             <option value="">All genres</option>
-            <option v-for="g in genres" :key="`filter-genre-${g.genre_id}`" :value="g.genre_name">{{ g.genre_name }}</option>
+            <option v-for="g in genres" :key="`filter-genre-${g.genre_id}`" :value="g.genre_name">{{ g.genre_name }}
+            </option>
           </select>
         </div>
         <div class="col-md-3">
           <label class="form-label mb-1">Filter by artist</label>
           <select v-model="selectedArtistFilter" class="form-select">
             <option value="">All artists</option>
-            <option v-for="a in artists" :key="`filter-artist-${a.artist_id}`" :value="a.artist_name">{{ a.artist_name }}</option>
+            <option v-for="a in artists" :key="`filter-artist-${a.artist_id}`" :value="a.artist_name">{{ a.artist_name
+            }}</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -47,9 +49,12 @@
       <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('basic')">Basic</button>
         <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('album')">Album</button>
-        <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('meta')">Artists and genres</button>
-        <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('timing')">Timing</button>
-        <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('media')">Media files</button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('meta')">Artists and
+          genres</button>
+        <button class="btn btn-outline-secondary btn-sm" type="button"
+          @click="scrollToSection('timing')">Timing</button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('media')">Media
+          files</button>
       </div>
 
       <div v-if="formError" class="alert alert-danger py-2 mb-3">{{ formError }}</div>
@@ -64,11 +69,13 @@
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">BPM</label>
-            <input v-model.number="form.bpm_value" class="form-control" type="number" min="1" max="999" placeholder="BPM" />
+            <input v-model.number="form.bpm_value" class="form-control" type="number" min="1" max="999"
+              placeholder="BPM" />
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">Price (EUR)</label>
-            <input v-model.number="form.track_price_eur" class="form-control" type="number" min="0" step="0.01" placeholder="1.99" />
+            <input v-model.number="form.track_price_eur" class="form-control" type="number" min="0" step="0.01"
+              placeholder="1.99" />
           </div>
         </div>
       </div>
@@ -80,7 +87,8 @@
             <label class="form-label mb-1">Choose existing album</label>
             <select v-model="form.album_id" class="form-select">
               <option value="">No album</option>
-              <option v-for="album in albums" :key="`album-${album.id}`" :value="String(album.id)">{{ album.title }}</option>
+              <option v-for="album in albums" :key="`album-${album.id}`" :value="String(album.id)">{{ album.title }}
+              </option>
             </select>
           </div>
           <div class="col-md-6">
@@ -96,18 +104,10 @@
           <div class="col-lg-6">
             <label class="form-label mb-1">Genres</label>
             <div v-for="(genre, idx) in form.genre_names" :key="`genre-${idx}`" class="d-flex gap-2 mb-1">
-              <input
-                v-model="form.genre_names[idx]"
-                class="form-control"
-                placeholder="Genre name"
-                list="genre-options"
-              />
-              <button
-                v-if="form.genre_names.length > 1"
-                class="btn btn-outline-danger btn-sm"
-                type="button"
-                @click="removeGenreField(idx)"
-              >
+              <input v-model="form.genre_names[idx]" class="form-control" placeholder="Genre name"
+                list="genre-options" />
+              <button v-if="form.genre_names.length > 1" class="btn btn-outline-danger btn-sm" type="button"
+                @click="removeGenreField(idx)">
                 -
               </button>
             </div>
@@ -115,27 +115,21 @@
               <option v-for="genre in genres" :key="genre.genre_id" :value="genre.genre_name"></option>
             </datalist>
             <small class="text-muted d-block">Select existing genres or type new ones.</small>
-            <small v-if="firstError(['genre_name','genre_ids','genre_ids.0','genre_names','genre_names.0'])" class="text-danger d-block">
-              {{ firstError(['genre_name','genre_ids','genre_ids.0','genre_names','genre_names.0']) }}
+            <small v-if="firstError(['genre_name', 'genre_ids', 'genre_ids.0', 'genre_names', 'genre_names.0'])"
+              class="text-danger d-block">
+              {{ firstError(['genre_name', 'genre_ids', 'genre_ids.0', 'genre_names', 'genre_names.0']) }}
             </small>
-            <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addGenreField">+ Add genre</button>
+            <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addGenreField">+ Add
+              genre</button>
           </div>
 
           <div class="col-lg-6">
             <label class="form-label mb-1">Artists</label>
             <div v-for="(artist, idx) in form.artist_names" :key="`artist-${idx}`" class="d-flex gap-2 mb-1">
-              <input
-                v-model="form.artist_names[idx]"
-                class="form-control"
-                :placeholder="`Artist ${idx + 1}`"
-                list="artist-options"
-              />
-              <button
-                v-if="form.artist_names.length > 1"
-                class="btn btn-outline-danger btn-sm"
-                type="button"
-                @click="removeArtistField(idx)"
-              >
+              <input v-model="form.artist_names[idx]" class="form-control" :placeholder="`Artist ${idx + 1}`"
+                list="artist-options" />
+              <button v-if="form.artist_names.length > 1" class="btn btn-outline-danger btn-sm" type="button"
+                @click="removeArtistField(idx)">
                 -
               </button>
             </div>
@@ -143,10 +137,12 @@
               <option v-for="artist in artists" :key="artist.artist_id" :value="artist.artist_name"></option>
             </datalist>
             <small class="text-muted d-block">Select existing artists or type new ones.</small>
-            <small v-if="firstError(['artist_names','artist_ids','artist_ids.0','artist_names.0'])" class="text-danger d-block">
-              {{ firstError(['artist_names','artist_ids','artist_ids.0','artist_names.0']) }}
+            <small v-if="firstError(['artist_names', 'artist_ids', 'artist_ids.0', 'artist_names.0'])"
+              class="text-danger d-block">
+              {{ firstError(['artist_names', 'artist_ids', 'artist_ids.0', 'artist_names.0']) }}
             </small>
-            <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addArtistField">+ Add artist</button>
+            <button class="btn btn-outline-secondary btn-sm mt-1" type="button" @click="addArtistField">+ Add
+              artist</button>
           </div>
         </div>
       </div>
@@ -160,40 +156,22 @@
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">Track length (sec)</label>
-            <input
-              v-model.number="form.track_length_sec"
-              class="form-control"
-              type="number"
-              min="1"
-              placeholder="Track length (sec)"
-            />
+            <input v-model.number="form.track_length_sec" class="form-control" type="number" min="1"
+              placeholder="Track length (sec)" />
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">Preview start (sec)</label>
-            <input
-              v-model.number="form.preview_start_at"
-              class="form-control"
-              type="number"
-              min="0"
-              :max="maxPreviewStart"
-              placeholder="Preview start (sec)"
-              @input="onPreviewStartInput"
-            />
+            <input v-model.number="form.preview_start_at" class="form-control" type="number" min="0"
+              :max="maxPreviewStart" placeholder="Preview start (sec)" @input="onPreviewStartInput" />
             <small class="text-muted">Format: {{ formatTime(form.preview_start_at) }}</small>
           </div>
           <div class="col-md-3">
             <label class="form-label mb-1">Preview end (sec)</label>
-            <input
-              v-model.number="form.preview_end_at"
-              class="form-control"
-              type="number"
-              min="1"
-              :max="maxPreviewEnd"
-              placeholder="Preview end (sec)"
-              @input="onPreviewEndInput"
-            />
+            <input v-model.number="form.preview_end_at" class="form-control" type="number" min="1" :max="maxPreviewEnd"
+              placeholder="Preview end (sec)" @input="onPreviewEndInput" />
             <small class="text-muted">Format: {{ formatTime(form.preview_end_at) }}</small>
-            <small v-if="firstError(['preview_end_at'])" class="text-danger d-block">{{ firstError(['preview_end_at']) }}</small>
+            <small v-if="firstError(['preview_end_at'])" class="text-danger d-block">{{ firstError(['preview_end_at'])
+            }}</small>
           </div>
         </div>
 
@@ -201,42 +179,23 @@
           Preview duration: {{ previewDuration }} sec (max 30 sec)
         </div>
         <div class="d-flex gap-2 align-items-center mt-2 flex-wrap">
-          <button
-            class="btn btn-outline-primary btn-sm"
-            type="button"
-            :disabled="!audioPreviewUrl || previewDuration <= 0"
-            @click="playPreviewSegment"
-          >
+          <button class="btn btn-outline-primary btn-sm" type="button"
+            :disabled="!audioPreviewUrl || previewDuration <= 0" @click="playPreviewSegment">
             Preview segment
           </button>
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            type="button"
-            :disabled="!audioPreviewUrl || previewDuration <= 0"
-            @click="regeneratePreviewSegment"
-          >
+          <button class="btn btn-outline-secondary btn-sm" type="button"
+            :disabled="!audioPreviewUrl || previewDuration <= 0" @click="regeneratePreviewSegment">
             Regenerate preview
           </button>
-          <button
-            class="btn btn-outline-danger btn-sm"
-            type="button"
-            :disabled="!isPreviewPlaying"
-            @click="stopPreviewSegment"
-          >
+          <button class="btn btn-outline-danger btn-sm" type="button" :disabled="!isPreviewPlaying"
+            @click="stopPreviewSegment">
             Stop
           </button>
           <small class="text-muted">{{ previewHint }}</small>
         </div>
         <div v-if="audioPreviewUrl" class="preview-seek-wrap mt-2">
-          <input
-            class="form-range"
-            type="range"
-            :min="form.preview_start_at"
-            :max="form.preview_end_at"
-            step="0.1"
-            :value="previewSeekTime"
-            @input="onPreviewSeekInput"
-          />
+          <input class="form-range" type="range" :min="form.preview_start_at" :max="form.preview_end_at" step="0.1"
+            :value="previewSeekTime" @input="onPreviewSeekInput" />
           <div class="small text-muted d-flex justify-content-between">
             <span>{{ formatTime(previewSeekTime) }}</span>
             <span>{{ formatTime(form.preview_end_at) }}</span>
@@ -249,15 +208,8 @@
             </button>
             <small class="text-muted">Full upload preview</small>
           </div>
-          <input
-            class="form-range"
-            type="range"
-            min="0"
-            :max="fullTrackDuration"
-            step="0.1"
-            :value="fullTrackCurrentTime"
-            @input="onFullTrackSeekInput"
-          />
+          <input class="form-range" type="range" min="0" :max="fullTrackDuration" step="0.1"
+            :value="fullTrackCurrentTime" @input="onFullTrackSeekInput" />
           <div class="small text-muted d-flex justify-content-between">
             <span>{{ formatTime(fullTrackCurrentTime) }}</span>
             <span>{{ formatTime(fullTrackDuration) }}</span>
@@ -270,47 +222,25 @@
         <div class="row g-2 mt-1">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Audio file</label>
-            <div
-              class="audio-dropzone mb-2"
-              :class="{ 'is-over': isDraggingAudio }"
-              @dragenter.prevent="isDraggingAudio = true"
-              @dragover.prevent="isDraggingAudio = true"
-              @dragleave.prevent="isDraggingAudio = false"
-              @drop.prevent="onAudioDrop"
-            >
+            <div class="audio-dropzone mb-2" :class="{ 'is-over': isDraggingAudio }"
+              @dragenter.prevent="isDraggingAudio = true" @dragover.prevent="isDraggingAudio = true"
+              @dragleave.prevent="isDraggingAudio = false" @drop.prevent="onAudioDrop">
               Drop audio here
             </div>
-            <input
-              ref="audioInputRef"
-              class="form-control"
-              type="file"
-              accept=".mp3,.wav,.ogg,.m4a,.flac,audio/*"
-              @change="onAudioChange"
-              required
-            />
+            <input ref="audioInputRef" class="form-control" type="file" accept=".mp3,.wav,.ogg,.m4a,.flac,audio/*"
+              @change="onAudioChange" required />
             <small class="text-muted">Supported: mp3, wav, ogg, m4a, flac (max 50 MB)</small>
-            <small v-if="firstError(['track_audio'])" class="text-danger d-block">{{ firstError(['track_audio']) }}</small>
+            <small v-if="firstError(['track_audio'])" class="text-danger d-block">{{ firstError(['track_audio'])
+            }}</small>
             <small v-if="analyzing" class="d-block text-primary mt-1">Analyzing audio metadata...</small>
           </div>
 
           <div class="col-md-6">
             <label class="form-label fw-semibold">Cover image (drag and drop)</label>
-            <div
-              class="cover-dropzone"
-              :class="{ 'is-over': isDraggingCover }"
-              @dragenter.prevent="isDraggingCover = true"
-              @dragover.prevent="isDraggingCover = true"
-              @dragleave.prevent="isDraggingCover = false"
-              @drop.prevent="onCoverDrop"
-              @click="openCoverPicker"
-            >
-              <input
-                ref="coverInputRef"
-                class="d-none"
-                type="file"
-                accept="image/*"
-                @change="onCoverChange"
-              />
+            <div class="cover-dropzone" :class="{ 'is-over': isDraggingCover }"
+              @dragenter.prevent="isDraggingCover = true" @dragover.prevent="isDraggingCover = true"
+              @dragleave.prevent="isDraggingCover = false" @drop.prevent="onCoverDrop" @click="openCoverPicker">
+              <input ref="coverInputRef" class="d-none" type="file" accept="image/*" @change="onCoverChange" />
 
               <template v-if="coverPreviewUrl">
                 <img :src="coverPreviewUrl" alt="Cover preview" class="cover-preview" />
@@ -320,7 +250,9 @@
                 <small class="text-muted">JPG, PNG, WEBP - max 5 MB</small>
               </template>
             </div>
-            <small v-if="firstError(['track_cover_file'])" class="text-danger d-block">{{ firstError(['track_cover_file']) }}</small>
+            <small v-if="firstError(['track_cover_file'])" class="text-danger d-block">{{
+              firstError(['track_cover_file'])
+            }}</small>
           </div>
         </div>
       </div>
@@ -334,37 +266,26 @@
         </button>
       </div>
 
-      <audio
-        ref="previewAudioRef"
-        :src="audioPreviewUrl"
-        preload="auto"
-        class="d-none"
-        @ended="stopPreviewSegment"
-        @timeupdate="onPreviewTimeUpdate"
-      ></audio>
-      <audio
-        ref="fullAudioRef"
-        :src="audioPreviewUrl"
-        preload="metadata"
-        class="d-none"
-        @loadedmetadata="onFullTrackLoadedMetadata"
-        @timeupdate="onFullTrackTimeUpdate"
-        @ended="onFullTrackEnded"
-      ></audio>
+      <audio ref="previewAudioRef" :src="audioPreviewUrl" preload="auto" class="d-none" @ended="stopPreviewSegment"
+        @timeupdate="onPreviewTimeUpdate"></audio>
+      <audio ref="fullAudioRef" :src="audioPreviewUrl" preload="metadata" class="d-none"
+        @loadedmetadata="onFullTrackLoadedMetadata" @timeupdate="onFullTrackTimeUpdate"
+        @ended="onFullTrackEnded"></audio>
     </form>
 
     <div class="row g-3">
       <div class="col-sm-6 col-lg-4 col-xl-3" v-for="t in filteredTracks" :key="trackId(t)">
         <RouterLink class="track-card-link" :to="`/tracks/${trackId(t)}`">
           <div class="card h-100 shadow-sm track-card">
-          <img class="card-img-top track-cover" :src="coverUrl(t.track_cover)" :alt="t.track_title" @error="onImgError" />
+            <img class="card-img-top track-cover" :src="coverUrl(t.track_cover)" :alt="t.track_title"
+              @error="onImgError" />
 
-          <div class="card-body d-flex flex-column track-meta">
-            <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
-            <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
-            <p class="mb-2 track-artist">Genres: {{ genreNames(t) }}</p>
-            <p class="mb-2 track-artist">Price: {{ formatPrice(t.track_price_eur) }}</p>
-          </div>
+            <div class="card-body d-flex flex-column track-meta">
+              <h3 class="h5 card-title mb-2 track-title">{{ t.track_title }}</h3>
+              <p class="mb-2 track-artist">Artist: {{ artistNames(t) }}</p>
+              <p class="mb-2 track-artist">Genres: {{ genreNames(t) }}</p>
+              <p class="mb-2 track-artist">Price: {{ formatPrice(t.track_price_eur) }}</p>
+            </div>
           </div>
         </RouterLink>
       </div>
@@ -373,791 +294,73 @@
 </template>
 
 <script>
-import service from "@/api/trackService";
-import genreService from "@/api/genreService";
-import artistService from "@/api/artistService";
-import albumService from "@/api/albumService";
-import { mapState } from "pinia";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { storeToRefs } from "pinia";
+import { useTracksViewStore } from "@/stores/views/tracksViewStore";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
-import { useSearchStore } from "@/stores/searchStore";
-import { storageUrl } from "@/utils/storageUrl";
-import { RouterLink } from "vue-router";
-
-const initialForm = () => ({
-  track_title: "",
-  album_id: "",
-  album_title: "",
-  genre_names: [""],
-  artist_names: [""],
-  bpm_value: null,
-  track_price_eur: 1.99,
-  release_date: "",
-  track_length_sec: null,
-  preview_start_at: 0,
-  preview_end_at: 30,
-});
-
-const toClean = (value) => String(value || "").trim();
-const toCleanLower = (value) => toClean(value).toLowerCase();
-const normalizeList = (list) => (list || []).map((x) => toClean(x)).filter(Boolean);
+import { RouterLink, useRoute } from "vue-router";
 
 export default {
   components: { RouterLink },
-  data() {
+  setup() {
+    const store = useTracksViewStore();
+    const { isAdmin } = storeToRefs(useUserLoginLogoutStore());
+    const route = useRoute();
+
+    const previewAudioRef = ref(null);
+    const fullAudioRef = ref(null);
+    const audioInputRef = ref(null);
+    const coverInputRef = ref(null);
+    const basicSection = ref(null);
+    const albumSection = ref(null);
+    const metaSection = ref(null);
+    const timingSection = ref(null);
+    const mediaSection = ref(null);
+
+    store.bindRefs({
+      previewAudioRef,
+      fullAudioRef,
+      audioInputRef,
+      coverInputRef,
+      basicSection,
+      albumSection,
+      metaSection,
+      timingSection,
+      mediaSection,
+    });
+
+    const storeRefs = storeToRefs(store);
+
+    watch(
+      () => route.query.genre,
+      (value) => {
+        store.applyGenreFromRouteQuery(value);
+      },
+    );
+
+    onMounted(async () => {
+      await store.load();
+      store.applyGenreFromRouteQuery(route.query.genre);
+    });
+
+    onBeforeUnmount(() => {
+      store.cleanup();
+    });
+
     return {
-      tracks: [],
-      genres: [],
-      artists: [],
-      albums: [],
-      form: initialForm(),
-      submitting: false,
-      analyzing: false,
-      formError: "",
-      validationErrors: {},
-      audioFile: null,
-      coverFile: null,
-      coverPreviewUrl: "",
-      isDraggingCover: false,
-      audioPreviewUrl: "",
-      isPreviewPlaying: false,
-      previewStopTimer: null,
-      previewHint: "",
-      previewSeekTime: 0,
-      isDraggingAudio: false,
-      isFullTrackPlaying: false,
-      fullTrackDuration: 0,
-      fullTrackCurrentTime: 0,
-      selectedGenreFilter: "",
-      selectedArtistFilter: "",
-      selectedBpmFilter: "",
+      ...storeRefs,
+      ...store,
+      isAdmin,
+      previewAudioRef,
+      fullAudioRef,
+      audioInputRef,
+      coverInputRef,
+      basicSection,
+      albumSection,
+      metaSection,
+      timingSection,
+      mediaSection,
     };
-  },
-  computed: {
-    ...mapState(useUserLoginLogoutStore, ["isAdmin"]),
-    ...mapState(useSearchStore, ["searchWord"]),
-    filteredTracks() {
-      const word = toCleanLower(this.searchWord);
-      return this.tracks.filter((t) => {
-        const genreFilter = toCleanLower(this.selectedGenreFilter);
-        if (genreFilter) {
-          const hasGenre =
-            toCleanLower(t.genre?.genre_name) === genreFilter
-            || (t.genres || []).some((g) => toCleanLower(g?.genre_name) === genreFilter);
-          if (!hasGenre) return false;
-        }
-
-        const artistFilter = toCleanLower(this.selectedArtistFilter);
-        if (artistFilter) {
-          const hasArtist = (t.artists || []).some((a) => toCleanLower(a?.artist_name) === artistFilter);
-          if (!hasArtist) return false;
-        }
-
-        const bpmFilter = Number(this.selectedBpmFilter || 0);
-        if (bpmFilter > 0 && Number(t?.bpm_value || 0) !== bpmFilter) {
-          return false;
-        }
-
-      if (!word) return true;
-        const hay = [
-          t.track_title,
-          t.genre?.genre_name,
-          ...(t.artists || []).map((a) => a.artist_name),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(word);
-      });
-    },
-    bpmFilterOptions() {
-      const values = (this.tracks || [])
-        .map((t) => Number(t?.bpm_value || 0))
-        .filter((bpm) => Number.isFinite(bpm) && bpm > 0);
-      return Array.from(new Set(values)).sort((a, b) => a - b);
-    },
-    previewDuration() {
-      return Math.max(0, Number(this.form.preview_end_at || 0) - Number(this.form.preview_start_at || 0));
-    },
-    maxPreviewStart() {
-      const length = Number(this.form.track_length_sec || 0);
-      if (!Number.isFinite(length) || length <= 0) return 999999;
-      return Math.max(0, length - 1);
-    },
-    maxPreviewEnd() {
-      const length = Number(this.form.track_length_sec || 0);
-      if (!Number.isFinite(length) || length <= 0) return 999999;
-      return length;
-    },
-  },
-  methods: {
-    coverUrl(file) {
-      if (!file) return "https://placehold.co/600x340?text=Track";
-      if (String(file).startsWith("http://") || String(file).startsWith("https://")) return String(file);
-      if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
-      return storageUrl(`track-covers/${file}`);
-    },
-    trackId(track) {
-      return track?.id ?? track?.track_id;
-    },
-    shuffleArray(items) {
-      const arr = [...items];
-      for (let i = arr.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    },
-    shuffleTracks() {
-      this.tracks = this.shuffleArray(this.tracks || []);
-    },
-    resetTrackFilters() {
-      this.selectedGenreFilter = "";
-      this.selectedArtistFilter = "";
-      this.selectedBpmFilter = "";
-    },
-    applyGenreFromRouteQuery() {
-      const queryGenre = toClean(this.$route?.query?.genre);
-      if (!queryGenre) return;
-
-      const target = queryGenre.toLowerCase();
-      const matched = (this.genres || []).find((g) => toCleanLower(g.genre_name) === target);
-      this.selectedGenreFilter = matched?.genre_name || queryGenre;
-    },
-    scrollToSection(section) {
-      const map = {
-        basic: "basicSection",
-        album: "albumSection",
-        meta: "metaSection",
-        timing: "timingSection",
-        media: "mediaSection",
-      };
-      const key = map[section];
-      if (!key) return;
-      const target = this.$refs[key];
-      if (target && typeof target.scrollIntoView === "function") {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    },
-    addArtistField() {
-      this.form.artist_names.push("");
-    },
-    addGenreField() {
-      this.form.genre_names.push("");
-    },
-    removeArtistField(index) {
-      this.form.artist_names.splice(index, 1);
-      if (this.form.artist_names.length === 0) {
-        this.form.artist_names = [""];
-      }
-    },
-    removeGenreField(index) {
-      this.form.genre_names.splice(index, 1);
-      if (this.form.genre_names.length === 0) {
-        this.form.genre_names = [""];
-      }
-    },
-    applyAnalyzedMetadata(data) {
-      if (!data || typeof data !== "object") return;
-
-      if (data.track_title && !this.form.track_title) {
-        this.form.track_title = toClean(data.track_title);
-      }
-
-      if (data.genre_name) {
-        const hasExistingGenres = this.form.genre_names.some((name) => toClean(name) !== "");
-        if (!hasExistingGenres) {
-          this.form.genre_names = [toClean(data.genre_name)];
-        }
-      }
-
-      if (Array.isArray(data.artist_names) && data.artist_names.length > 0) {
-        const hasExistingArtists = this.form.artist_names.some((name) => toClean(name) !== "");
-        if (!hasExistingArtists) {
-          this.form.artist_names = data.artist_names.map((name) => toClean(name));
-        }
-      }
-
-      if (data.release_date && !this.form.release_date) {
-        this.form.release_date = toClean(data.release_date);
-      }
-
-      if (data.track_length_sec) {
-        this.form.track_length_sec = Number(data.track_length_sec) || this.form.track_length_sec;
-      }
-
-      if (data.bpm_value && !this.form.bpm_value) {
-        this.form.bpm_value = data.bpm_value;
-      }
-    },
-    artistNames(track) {
-      return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
-    },
-    genreNames(track) {
-      const list = (track.genres || [])
-        .map((g) => g?.genre_name)
-        .filter((name) => String(name || "").trim() !== "");
-      if (list.length === 0 && track?.genre?.genre_name) {
-        list.push(track.genre.genre_name);
-      }
-      return list.length > 0 ? list.join(", ") : "-";
-    },
-    onImgError(e) {
-      e.target.src = "https://placehold.co/600x340?text=No+Cover";
-    },
-    previewWindowSize() {
-      const length = Number(this.form.track_length_sec || 0);
-      if (Number.isFinite(length) && length > 0) {
-        return Math.min(30, Math.floor(length));
-      }
-      return 30;
-    },
-    onPreviewStartInput() {
-      let start = Number(this.form.preview_start_at || 0);
-      start = Number.isFinite(start) ? Math.max(0, Math.floor(start)) : 0;
-
-      const windowSize = this.previewWindowSize();
-      let end = start + windowSize;
-
-      const length = Number(this.form.track_length_sec || 0);
-      if (Number.isFinite(length) && length > 0 && end > length) {
-        end = length;
-        start = Math.max(0, end - windowSize);
-      }
-
-      this.form.preview_start_at = start;
-      this.form.preview_end_at = end;
-    },
-    onPreviewEndInput() {
-      let end = Number(this.form.preview_end_at || 0);
-      end = Number.isFinite(end) ? Math.max(1, Math.floor(end)) : 30;
-
-      const length = Number(this.form.track_length_sec || 0);
-      if (Number.isFinite(length) && length > 0) {
-        end = Math.min(end, length);
-      }
-
-      const windowSize = this.previewWindowSize();
-      let start = Math.max(0, end - windowSize);
-
-      if (Number.isFinite(length) && length > 0 && (end - start) < windowSize) {
-        end = Math.min(length, start + windowSize);
-        start = Math.max(0, end - windowSize);
-      }
-
-      this.form.preview_start_at = start;
-      this.form.preview_end_at = end;
-    },
-    normalizePreviewWindow() {
-      this.onPreviewStartInput();
-    },
-    clearPreviewTimer() {
-      if (this.previewStopTimer) {
-        clearTimeout(this.previewStopTimer);
-        this.previewStopTimer = null;
-      }
-    },
-    stopPreviewSegment() {
-      this.clearPreviewTimer();
-      const audio = this.$refs.previewAudioRef;
-      if (audio) {
-        audio.pause();
-      }
-      this.isPreviewPlaying = false;
-      this.previewSeekTime = Number(this.form.preview_start_at || 0);
-    },
-    stopFullTrack() {
-      const audio = this.$refs.fullAudioRef;
-      if (audio) {
-        audio.pause();
-      }
-      this.isFullTrackPlaying = false;
-    },
-    toggleFullTrackPlay() {
-      const audio = this.$refs.fullAudioRef;
-      if (!audio || !this.audioPreviewUrl) return;
-
-      if (this.isFullTrackPlaying) {
-        audio.pause();
-        this.isFullTrackPlaying = false;
-        return;
-      }
-
-      this.stopPreviewSegment();
-      audio.play();
-      this.isFullTrackPlaying = true;
-    },
-    onFullTrackLoadedMetadata() {
-      const audio = this.$refs.fullAudioRef;
-      this.fullTrackDuration = Number(audio?.duration || 0);
-    },
-    onFullTrackTimeUpdate() {
-      const audio = this.$refs.fullAudioRef;
-      this.fullTrackCurrentTime = Number(audio?.currentTime || 0);
-    },
-    onFullTrackEnded() {
-      this.isFullTrackPlaying = false;
-      this.fullTrackCurrentTime = 0;
-    },
-    onFullTrackSeekInput(event) {
-      const next = Number(event?.target?.value || 0);
-      const audio = this.$refs.fullAudioRef;
-      if (!audio) return;
-      audio.currentTime = next;
-      this.fullTrackCurrentTime = next;
-    },
-    playPreviewSegment() {
-      if (!this.audioPreviewUrl) return;
-
-      this.normalizePreviewWindow();
-      const start = Number(this.form.preview_start_at || 0);
-      const end = Number(this.form.preview_end_at || 0);
-      const durationMs = Math.max(0, (end - start) * 1000);
-      if (durationMs <= 0) return;
-
-      const audio = this.$refs.previewAudioRef;
-      if (!audio) return;
-
-      this.stopPreviewSegment();
-      audio.currentTime = start;
-      this.previewSeekTime = start;
-      audio.play();
-      this.isPreviewPlaying = true;
-      this.previewHint = `Playing ${start}s-${end}s`;
-
-      this.previewStopTimer = setTimeout(() => {
-        this.stopPreviewSegment();
-      }, durationMs + 80);
-    },
-    regeneratePreviewSegment() {
-      this.playPreviewSegment();
-      this.previewHint = "Preview regenerated with current start/end";
-    },
-    onPreviewSeekInput(event) {
-      const next = Number(event?.target?.value || this.form.preview_start_at || 0);
-      const min = Number(this.form.preview_start_at || 0);
-      const max = Number(this.form.preview_end_at || 0);
-      const clamped = Math.max(min, Math.min(max, next));
-      this.previewSeekTime = clamped;
-      const audio = this.$refs.previewAudioRef;
-      if (audio) {
-        audio.currentTime = clamped;
-      }
-    },
-    onPreviewTimeUpdate() {
-      const audio = this.$refs.previewAudioRef;
-      if (!audio) return;
-      this.previewSeekTime = Number(audio.currentTime || this.form.preview_start_at || 0);
-      if (this.previewSeekTime >= Number(this.form.preview_end_at || 0)) {
-        this.stopPreviewSegment();
-      }
-    },
-    formatTime(value) {
-      const total = Math.max(0, Math.floor(Number(value) || 0));
-      const min = Math.floor(total / 60);
-      const sec = total % 60;
-      return `${min}:${String(sec).padStart(2, "0")}`;
-    },
-    formatPrice(value) {
-      const amount = Number(value);
-      const safeAmount = Number.isFinite(amount) ? amount : 1.99;
-      return `€${safeAmount.toFixed(2)}`;
-    },
-    onAudioChange(event) {
-      const file = event.target.files?.[0] || null;
-      this.handleAudioSelected(file);
-    },
-    onAudioDrop(event) {
-      this.isDraggingAudio = false;
-      const file = event.dataTransfer?.files?.[0] || null;
-      this.syncAudioInputFile(file);
-      this.handleAudioSelected(file);
-    },
-    syncAudioInputFile(file) {
-      const input = this.$refs.audioInputRef;
-      if (!input || !file) return;
-      try {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        input.files = dt.files;
-      } catch (_err) {
-      }
-    },
-    handleAudioSelected(file) {
-      this.stopPreviewSegment();
-      this.stopFullTrack();
-      this.previewHint = "";
-      this.audioFile = file;
-      if (this.audioPreviewUrl) {
-        URL.revokeObjectURL(this.audioPreviewUrl);
-        this.audioPreviewUrl = "";
-      }
-      if (!file) return;
-      this.audioPreviewUrl = URL.createObjectURL(file);
-      this.previewSeekTime = Number(this.form.preview_start_at || 0);
-      this.fullTrackCurrentTime = 0;
-      this.fullTrackDuration = 0;
-      this.applyFilenameFallback(file.name);
-
-      const audio = document.createElement("audio");
-      audio.preload = "metadata";
-      audio.src = URL.createObjectURL(file);
-      audio.onloadedmetadata = () => {
-        const duration = Math.floor(audio.duration || 0);
-        if (duration > 0) {
-          this.form.track_length_sec = duration;
-          if (this.form.preview_end_at > duration) {
-            this.form.preview_end_at = duration;
-          }
-          this.normalizePreviewWindow();
-        }
-        URL.revokeObjectURL(audio.src);
-      };
-
-      this.analyzeAudioFile(file);
-    },
-    applyFilenameFallback(fileName) {
-      const base = String(fileName || "").replace(/\.[^/.]+$/, "");
-      const clean = base.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-      if (!clean) return;
-
-      const parts = clean.split(" - ");
-      if (parts.length >= 2) {
-        const artistRaw = parts[0].trim();
-        const titleRaw = parts.slice(1).join(" - ").trim();
-
-        if (!this.form.track_title && titleRaw) {
-          this.form.track_title = titleRaw;
-        }
-
-        const artistNames = artistRaw
-          .split(/,|&| feat\. | feat | ft\. | ft | featuring | x | and |;/i)
-          .map((x) => x.trim())
-          .filter(Boolean);
-
-        const hasExistingArtists = this.form.artist_names.some((name) => String(name || "").trim() !== "");
-        if (!hasExistingArtists && artistNames.length > 0) {
-          this.form.artist_names = artistNames;
-        }
-        return;
-      }
-
-      if (!this.form.track_title) {
-        this.form.track_title = clean;
-      }
-    },
-    async analyzeAudioFile(file) {
-      this.analyzing = true;
-      this.clearValidationErrors();
-      try {
-        const res = await service.analyzeUpload(file);
-        const analyzed = res?.data && typeof res.data === "object" ? res.data : (res || {});
-        this.applyAnalyzedMetadata(analyzed);
-        if (analyzed?.track_length_sec) {
-          this.form.track_length_sec = Number(analyzed.track_length_sec) || this.form.track_length_sec;
-          this.normalizePreviewWindow();
-        }
-        if (analyzed?.cover_data_url && !this.coverFile) {
-          this.setCoverFromDataUrl(analyzed.cover_data_url, file?.name);
-        }
-        if (!analyzed?.bpm_value && !this.form.bpm_value) {
-          const fallbackBpm = await this.estimateBpmFromAudioFile(file);
-          if (fallbackBpm) {
-            this.form.bpm_value = fallbackBpm;
-          }
-        }
-        this.normalizePreviewWindow();
-      } catch (err) {
-        this.setValidationErrorsFromResponse(err);
-        this.formError = err?.response?.data?.message || "Audio analyze failed, fallback from filename used.";
-      } finally {
-        this.analyzing = false;
-      }
-    },
-    setCoverFromDataUrl(dataUrl, originalAudioName) {
-      const data = String(dataUrl || "");
-      const match = data.match(/^data:(.*?);base64,(.*)$/);
-      if (!match) return;
-
-      const mime = match[1] || "image/jpeg";
-      const b64 = match[2] || "";
-      if (!b64) return;
-
-      try {
-        const binary = atob(b64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i += 1) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const baseName = String(originalAudioName || "cover").replace(/\.[^/.]+$/, "").trim() || "cover";
-        const ext = mime.includes("png") ? "png" : (mime.includes("webp") ? "webp" : "jpg");
-        const file = new File([bytes], `${baseName}-cover.${ext}`, { type: mime });
-        this.setCoverFile(file);
-      } catch (_err) {
-      }
-    },
-    async estimateBpmFromAudioFile(file) {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return null;
-
-        const ctx = new AudioCtx();
-        try {
-          const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-          const data = buffer.getChannelData(0);
-          const frameSize = 2048;
-          const hop = 512;
-          const envelope = [];
-
-          for (let i = 0; i + frameSize < data.length; i += hop) {
-            let e = 0;
-            for (let j = 0; j < frameSize; j += 1) {
-              const s = data[i + j];
-              e += s * s;
-            }
-            envelope.push(Math.sqrt(e / frameSize));
-          }
-
-          if (envelope.length < 16) return null;
-
-          const mean = envelope.reduce((a, b) => a + b, 0) / envelope.length;
-          const threshold = mean * 1.3;
-          const peaks = [];
-
-          for (let i = 1; i < envelope.length - 1; i += 1) {
-            if (envelope[i] > threshold && envelope[i] > envelope[i - 1] && envelope[i] >= envelope[i + 1]) {
-              peaks.push(i);
-            }
-          }
-
-          if (peaks.length < 8) return null;
-
-          const bpmBins = new Map();
-          for (let i = 0; i < peaks.length; i += 1) {
-            for (let j = i + 1; j < Math.min(i + 20, peaks.length); j += 1) {
-              const deltaFrames = peaks[j] - peaks[i];
-              if (deltaFrames <= 0) continue;
-              let bpm = (60 * buffer.sampleRate) / (deltaFrames * hop);
-              while (bpm < 70) bpm *= 2;
-              while (bpm > 180) bpm /= 2;
-              const rounded = Math.round(bpm);
-              if (rounded >= 70 && rounded <= 180) {
-                bpmBins.set(rounded, (bpmBins.get(rounded) || 0) + 1);
-              }
-            }
-          }
-
-          let best = null;
-          let score = -1;
-          bpmBins.forEach((v, k) => {
-            if (v > score) {
-              score = v;
-              best = k;
-            }
-          });
-
-          return best;
-        } finally {
-          await ctx.close();
-        }
-      } catch (_err) {
-        return null;
-      }
-    },
-    openCoverPicker() {
-      this.$refs.coverInputRef?.click();
-    },
-    setCoverFile(file) {
-      this.coverFile = file;
-      if (this.coverPreviewUrl) {
-        URL.revokeObjectURL(this.coverPreviewUrl);
-      }
-      this.coverPreviewUrl = file ? URL.createObjectURL(file) : "";
-    },
-    onCoverChange(event) {
-      const file = event.target.files?.[0] || null;
-      this.setCoverFile(file);
-    },
-    onCoverDrop(event) {
-      this.isDraggingCover = false;
-      const file = event.dataTransfer?.files?.[0] || null;
-      if (!file) return;
-      if (!file.type.startsWith("image/")) {
-        this.formError = "Only image files can be used as track cover.";
-        return;
-      }
-      this.formError = "";
-      this.setCoverFile(file);
-    },
-    firstError(keys) {
-      const list = Array.isArray(keys) ? keys : [keys];
-      for (const key of list) {
-        if (this.validationErrors?.[key]) return this.validationErrors[key];
-      }
-      return "";
-    },
-    toValidationError(err) {
-      const errors = err?.response?.data?.errors;
-      if (!errors || typeof errors !== "object") {
-        return err?.response?.data?.message || "Track creation failed.";
-      }
-
-      const firstKey = Object.keys(errors)[0];
-      if (!firstKey) return "Validation error.";
-      const firstValue = errors[firstKey];
-      if (Array.isArray(firstValue) && firstValue.length > 0) return firstValue[0];
-      return "Validation error.";
-    },
-    clearValidationErrors() {
-      this.validationErrors = {};
-    },
-    setValidationErrorsFromResponse(err) {
-      const errors = err?.response?.data?.errors;
-      if (errors && typeof errors === "object") {
-        const mapped = {};
-        Object.entries(errors).forEach(([key, value]) => {
-          if (Array.isArray(value) && value.length > 0) {
-            mapped[key] = value[0];
-          } else if (typeof value === "string") {
-            mapped[key] = value;
-          }
-        });
-        this.validationErrors = mapped;
-      }
-
-      const uploadError = err?.response?.data?.data?.upload_error;
-      if (uploadError) {
-        this.validationErrors = {
-          ...this.validationErrors,
-          track_audio: uploadError,
-        };
-      }
-    },
-    async load() {
-      const [tracksRes, genresRes, artistsRes, albumsRes] = await Promise.allSettled([
-        service.list(),
-        genreService.list(),
-        artistService.list(),
-        albumService.list(),
-      ]);
-
-      this.tracks = tracksRes.status === "fulfilled" ? this.shuffleArray(tracksRes.value.data || []) : [];
-      this.genres = genresRes.status === "fulfilled" ? (genresRes.value.data || []) : [];
-      this.artists = artistsRes.status === "fulfilled" ? (artistsRes.value.data || []) : [];
-      this.albums = albumsRes.status === "fulfilled" ? (albumsRes.value.data || []) : [];
-
-      if (tracksRes.status !== "fulfilled") {
-        throw tracksRes.reason;
-      }
-    },
-    async createTrack() {
-      this.formError = "";
-      this.clearValidationErrors();
-      this.normalizePreviewWindow();
-      this.stopPreviewSegment();
-
-      if (!this.audioFile) {
-        this.formError = "Audio file is required.";
-        return;
-      }
-
-      const artistNames = normalizeList(this.form.artist_names);
-
-      if (artistNames.length === 0) {
-        this.formError = "At least one artist is required.";
-        return;
-      }
-
-      if (this.previewDuration > 30) {
-        this.formError = "Preview duration cannot exceed 30 seconds.";
-        return;
-      }
-
-      this.submitting = true;
-      try {
-        const payload = new FormData();
-        payload.append("track_title", this.form.track_title);
-        if (this.form.album_id) {
-          payload.append("album_id", String(this.form.album_id));
-        } else if (String(this.form.album_title || "").trim() !== "") {
-          payload.append("album_title", String(this.form.album_title).trim());
-        }
-
-        const genreNames = normalizeList(this.form.genre_names);
-        if (genreNames.length === 0) {
-          this.formError = "At least one genre is required.";
-          this.submitting = false;
-          return;
-        }
-
-        const existingByName = new Map(
-          (this.genres || []).map((g) => [toCleanLower(g.genre_name), g])
-        );
-
-        const genreIds = [];
-        const newGenreNames = [];
-        for (const genreName of genreNames) {
-          const existing = existingByName.get(genreName.toLowerCase());
-          if (existing?.genre_id) {
-            genreIds.push(existing.genre_id);
-          } else {
-            newGenreNames.push(genreName);
-          }
-        }
-
-        genreIds.forEach((id, index) => payload.append(`genre_ids[${index}]`, String(id)));
-        newGenreNames.forEach((name, index) => payload.append(`genre_names[${index}]`, name));
-
-        payload.append("preview_start_at", String(this.form.preview_start_at));
-        payload.append("preview_end_at", String(this.form.preview_end_at));
-        payload.append("track_audio", this.audioFile);
-
-        artistNames.forEach((name, index) => payload.append(`artist_names[${index}]`, name));
-
-        if (this.form.bpm_value) payload.append("bpm_value", String(this.form.bpm_value));
-        payload.append("track_price_eur", String(Number(this.form.track_price_eur ?? 1.99).toFixed(2)));
-        if (this.form.release_date) payload.append("release_date", this.form.release_date);
-        if (this.form.track_length_sec) payload.append("track_length_sec", String(this.form.track_length_sec));
-        if (this.coverFile) payload.append("track_cover_file", this.coverFile);
-
-        await service.create(payload);
-        this.form = initialForm();
-        this.clearValidationErrors();
-        this.audioFile = null;
-        this.stopFullTrack();
-        if (this.audioPreviewUrl) {
-          URL.revokeObjectURL(this.audioPreviewUrl);
-          this.audioPreviewUrl = "";
-        }
-        this.previewHint = "";
-        this.setCoverFile(null);
-        await this.load();
-      } catch (err) {
-        this.setValidationErrorsFromResponse(err);
-        this.formError = this.toValidationError(err);
-      } finally {
-        this.submitting = false;
-      }
-    },
-  },
-  watch: {
-    "$route.query.genre"() {
-      this.applyGenreFromRouteQuery();
-    },
-  },
-  async mounted() {
-    await this.load();
-    this.applyGenreFromRouteQuery();
-  },
-  beforeUnmount() {
-    this.stopPreviewSegment();
-    this.stopFullTrack();
-    if (this.audioPreviewUrl) {
-      URL.revokeObjectURL(this.audioPreviewUrl);
-    }
-    if (this.coverPreviewUrl) {
-      URL.revokeObjectURL(this.coverPreviewUrl);
-    }
   },
 };
 </script>
@@ -1456,7 +659,4 @@ export default {
   }
 }
 </style>
-
-
-
 
