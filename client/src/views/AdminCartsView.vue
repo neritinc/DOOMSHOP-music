@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="admin-carts-page">
     <div class="d-flex align-items-center justify-content-between mb-3">
       <h2 class="h5 m-0">Users and Their Carts</h2>
@@ -41,49 +41,23 @@
 </template>
 
 <script>
-import service from "@/api/cartService";
+import { onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { useAdminCartsViewStore } from "@/stores/views/adminCartsViewStore";
 
 export default {
-  data() {
+  setup() {
+    const store = useAdminCartsViewStore();
+    const storeRefs = storeToRefs(store);
+
+    onMounted(async () => {
+      await store.load();
+    });
+
     return {
-      carts: [],
-      loading: false,
-      error: "",
+      ...storeRefs,
+      load: store.load,
     };
-  },
-  computed: {
-    groupedCarts() {
-      const map = new Map();
-      (this.carts || []).forEach((cart) => {
-        const user = cart?.user || {};
-        const id = user?.id || cart?.user_id || `user-${cart?.id}`;
-        if (!map.has(id)) {
-          map.set(id, {
-            userId: id,
-            name: user?.name || "",
-            email: user?.email || "",
-            carts: [],
-          });
-        }
-        map.get(id).carts.push(cart);
-      });
-      return Array.from(map.values());
-    },
-    totalUsers() {
-      return this.groupedCarts.length;
-    },
-  },
-  async mounted() {
-    this.loading = true;
-    this.error = "";
-    try {
-      const res = await service.allCarts();
-      this.carts = res.data || [];
-    } catch (err) {
-      this.error = err?.response?.data?.message || "Failed to load carts.";
-    } finally {
-      this.loading = false;
-    }
   },
 };
 </script>
@@ -155,3 +129,4 @@ export default {
   background: #f8fafc;
 }
 </style>
+

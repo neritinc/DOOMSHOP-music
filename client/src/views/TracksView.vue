@@ -44,8 +44,17 @@
     <form v-if="isAdmin" class="card card-body mb-3" @submit.prevent="createTrack">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h3 class="h6 m-0">Create new track (Admin)</h3>
-        <span class="section-chip">Structured editor</span>
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-outline-secondary btn-sm" type="button" @click="showCreateEditor = !showCreateEditor">
+            {{ showCreateEditor ? "Hide editor" : "Show editor" }}
+          </button>
+          <span class="section-chip">Structured editor</span>
+        </div>
       </div>
+      <div v-if="!showCreateEditor" class="text-muted small">
+        The create-track editor is hidden.
+      </div>
+      <template v-else>
       <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('basic')">Basic</button>
         <button class="btn btn-outline-secondary btn-sm" type="button" @click="scrollToSection('album')">Album</button>
@@ -271,6 +280,7 @@
       <audio ref="fullAudioRef" :src="audioPreviewUrl" preload="metadata" class="d-none"
         @loadedmetadata="onFullTrackLoadedMetadata" @timeupdate="onFullTrackTimeUpdate"
         @ended="onFullTrackEnded"></audio>
+      </template>
     </form>
 
     <div class="row g-3">
@@ -306,6 +316,7 @@ export default {
     const store = useTracksViewStore();
     const { isAdmin } = storeToRefs(useUserLoginLogoutStore());
     const route = useRoute();
+    const showCreateEditor = ref(true);
 
     const previewAudioRef = ref(null);
     const fullAudioRef = ref(null);
@@ -347,10 +358,50 @@ export default {
       store.cleanup();
     });
 
+    const {
+      bindRefs,
+      load,
+      applyGenreFromRouteQuery,
+      cleanup,
+      trackId,
+      coverUrl,
+      onImgError,
+      artistNames,
+      genreNames,
+      shuffleTracks,
+      resetTrackFilters,
+      scrollToSection,
+      playPreviewSegment,
+      regeneratePreviewSegment,
+      stopPreviewSegment,
+      onPreviewSeekInput,
+      onPreviewTimeUpdate,
+      onPreviewStartInput,
+      onPreviewEndInput,
+      toggleFullTrackPlay,
+      onFullTrackLoadedMetadata,
+      onFullTrackTimeUpdate,
+      onFullTrackSeekInput,
+      onFullTrackEnded,
+      formatTime,
+      formatPrice,
+      onAudioChange,
+      onAudioDrop,
+      openCoverPicker,
+      onCoverChange,
+      onCoverDrop,
+      addGenreField,
+      removeGenreField,
+      addArtistField,
+      removeArtistField,
+      firstError,
+      createTrack,
+    } = store;
+
     return {
       ...storeRefs,
-      ...store,
       isAdmin,
+      showCreateEditor,
       previewAudioRef,
       fullAudioRef,
       audioInputRef,
@@ -360,6 +411,43 @@ export default {
       metaSection,
       timingSection,
       mediaSection,
+      bindRefs,
+      load,
+      applyGenreFromRouteQuery,
+      cleanup,
+      trackId,
+      coverUrl,
+      onImgError,
+      artistNames,
+      genreNames,
+      shuffleTracks,
+      resetTrackFilters,
+      scrollToSection,
+      playPreviewSegment,
+      regeneratePreviewSegment,
+      stopPreviewSegment,
+      onPreviewSeekInput,
+      onPreviewTimeUpdate,
+      onPreviewStartInput,
+      onPreviewEndInput,
+      toggleFullTrackPlay,
+      onFullTrackLoadedMetadata,
+      onFullTrackTimeUpdate,
+      onFullTrackSeekInput,
+      onFullTrackEnded,
+      formatTime,
+      formatPrice,
+      onAudioChange,
+      onAudioDrop,
+      openCoverPicker,
+      onCoverChange,
+      onCoverDrop,
+      addGenreField,
+      removeGenreField,
+      addArtistField,
+      removeArtistField,
+      firstError,
+      createTrack,
     };
   },
 };

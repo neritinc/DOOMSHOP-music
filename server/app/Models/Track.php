@@ -53,15 +53,6 @@ class Track extends Model
                 || $track->wasChanged('preview_end_at')
                 || $track->wasChanged('preview_path');
 
-            if (
-                $track->wasRecentlyCreated
-                || $track->wasChanged('preview_path')
-                || $track->wasChanged('preview_start_at')
-                || $track->wasChanged('preview_end_at')
-            ) {
-                self::syncPreviewCsv();
-            }
-
             if ($shouldSyncTracksCsv) {
                 self::syncTracksCsv();
             }
@@ -70,17 +61,12 @@ class Track extends Model
         static::deleted(function (Track $track): void {
             $deletedPreviewPath = (string) ($track->getOriginal('preview_path') ?: $track->preview_path ?: '');
             self::deletePreviewIfUnused($deletedPreviewPath);
-            self::syncPreviewCsv();
             self::syncTracksCsv();
         });
     }
 
     public static function syncCsvExports(bool $includePreview = true): void
     {
-        if ($includePreview) {
-            self::syncPreviewCsv();
-        }
-
         self::syncTracksCsv();
     }
 
@@ -100,33 +86,6 @@ class Track extends Model
         if (! $stillUsed && Storage::disk('public')->exists($normalized)) {
             Storage::disk('public')->delete($normalized);
         }
-    }
-
-    private static function syncPreviewCsv(): void
-    {
-        $rows = self::query()
-            ->select(['id', 'preview_path', 'preview_start_at', 'preview_end_at'])
-            ->whereNotNull('preview_path')
-            ->where('preview_path', '!=', '')
-            ->orderBy('id')
-            ->get();
-
-        $lines = ['"id";"preview_path";"preview_start_at";"preview_end_at"'];
-        foreach ($rows as $row) {
-            $id = (int) $row->id;
-            $previewPath = str_replace('"', '""', (string) ($row->preview_path ?? ''));
-            $previewStart = (int) ($row->preview_start_at ?? 0);
-            $previewEnd = (int) ($row->preview_end_at ?? 30);
-            $lines[] = "\"{$id}\";\"{$previewPath}\";\"{$previewStart}\";\"{$previewEnd}\"";
-        }
-
-        $csvPath = database_path('csv/track_previews.csv');
-        $dir = dirname($csvPath);
-        if (! File::exists($dir)) {
-            File::makeDirectory($dir, 0755, true);
-        }
-
-        File::put($csvPath, implode(PHP_EOL, $lines) . PHP_EOL);
     }
 
     private static function syncTracksCsv(): void

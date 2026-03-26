@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="home-shell">
     <section class="hero-card reveal-up">
       <div class="hero-noise" aria-hidden="true"></div>
@@ -107,7 +107,14 @@
 </template>
 
 <script>
-export default {};
+import { useHomeViewStore } from "@/stores/views/homeViewStore";
+
+export default {
+  setup() {
+    useHomeViewStore();
+    return {};
+  },
+};
 </script>
 
 <style scoped>
@@ -535,3 +542,4 @@ export default {};
   }
 }
 </style>
+

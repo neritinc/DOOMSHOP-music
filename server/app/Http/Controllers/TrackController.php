@@ -420,7 +420,7 @@ class TrackController extends Controller
         $length = ($end - $start) + 1;
 
         $headers = [
-            'Content-Type' => 'audio/mpeg',
+            'Content-Type' => $this->detectAudioContentType($fullPath),
             'Content-Length' => (string) $length,
             'Accept-Ranges' => 'bytes',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
@@ -465,17 +465,7 @@ class TrackController extends Controller
             return response()->json(['message' => 'Track source file not found', 'data' => null], 404);
         }
 
-        $extension = strtolower((string) pathinfo((string) ($track->track_path ?? ''), PATHINFO_EXTENSION));
-        if ($extension === '') {
-            $extension = strtolower((string) pathinfo($sourcePath, PATHINFO_EXTENSION));
-        }
-        if ($extension === '' || $extension === 'bin') {
-            $extension = 'mp3';
-        }
-
-        $downloadName = $this->safeDownloadName((string) ($track->track_title ?? 'track'), $extension);
-
-        return $this->streamAudioFile($request, $sourcePath, $downloadName);
+        return $this->streamAudioFile($request, $sourcePath);
     }
 
     public function regeneratePreview(Request $request, int $id): JsonResponse
@@ -591,7 +581,7 @@ class TrackController extends Controller
         $length = ($end - $start) + 1;
 
         $headers = [
-            'Content-Type' => 'audio/mpeg',
+            'Content-Type' => $this->detectAudioContentType($fullPath),
             'Content-Length' => (string) $length,
             'Accept-Ranges' => 'bytes',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
@@ -626,6 +616,45 @@ class TrackController extends Controller
 
             fclose($handle);
         }, $status, $headers);
+    }
+
+    private function detectAudioContentType(string $fullPath): string
+    {
+        $mime = '';
+
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $detected = finfo_file($finfo, $fullPath);
+                finfo_close($finfo);
+                if (is_string($detected)) {
+                    $mime = strtolower(trim($detected));
+                }
+            }
+        }
+
+        $normalizedMime = match ($mime) {
+            'audio/mpeg', 'audio/mp3', 'audio/x-mp3' => 'audio/mpeg',
+            'audio/wav', 'audio/x-wav', 'audio/wave', 'audio/vnd.wave' => 'audio/wav',
+            'audio/ogg', 'audio/vorbis', 'application/ogg' => 'audio/ogg',
+            'audio/mp4', 'audio/x-m4a', 'video/mp4' => 'audio/mp4',
+            'audio/flac', 'audio/x-flac' => 'audio/flac',
+            default => '',
+        };
+
+        if ($normalizedMime !== '') {
+            return $normalizedMime;
+        }
+
+        $extension = strtolower((string) pathinfo($fullPath, PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'm4a' => 'audio/mp4',
+            'flac' => 'audio/flac',
+            default => 'audio/mpeg',
+        };
     }
 
     private function safeDownloadName(string $title, string $extension): string

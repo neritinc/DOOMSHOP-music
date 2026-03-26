@@ -37,12 +37,14 @@
       <div v-for="a in items" :key="a.artist_id" class="col-sm-6 col-lg-4 col-xl-3">
         <div class="card h-100 shadow-sm artist-card">
           <RouterLink class="artist-link" :to="`/artists/${a.artist_id}/tracks`">
-            <img
-              :src="coverUrl(a.artist_picture)"
-              :alt="a.artist_name"
-              class="card-img-top artist-cover"
-              @error="onImgError"
-            />
+            <div class="artist-cover-wrap">
+              <img
+                :src="coverUrl(a.artist_picture)"
+                :alt="a.artist_name"
+                class="card-img-top artist-cover"
+                @error="onImgError"
+              />
+            </div>
 
             <div class="card-body artist-meta">
               <h3 class="artist-name">{{ a.artist_name }}</h3>
@@ -146,12 +148,46 @@ export default {
       store.cleanup();
     });
 
+    const {
+      load,
+      coverUrl,
+      onImgError,
+      createOne,
+      deleteArtist,
+      openPicturePicker,
+      onPictureChange,
+      onPictureDrop,
+      openUpdateModal,
+      closeUpdateModal,
+      openUpdatePicturePicker,
+      onUpdatePictureChange,
+      onUpdatePictureDrop,
+      saveUpdatedPicture,
+      fieldError,
+      cleanup,
+    } = store;
+
     return {
       ...storeRefs,
-      ...store,
       isAdmin,
       artistPictureInputRef,
       updateArtistPictureInputRef,
+      load,
+      coverUrl,
+      onImgError,
+      createOne,
+      deleteArtist,
+      openPicturePicker,
+      onPictureChange,
+      onPictureDrop,
+      openUpdateModal,
+      closeUpdateModal,
+      openUpdatePicturePicker,
+      onUpdatePictureChange,
+      onUpdatePictureDrop,
+      saveUpdatedPicture,
+      fieldError,
+      cleanup,
     };
   },
 };
@@ -216,7 +252,8 @@ export default {
 .artist-link {
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
 }
 
@@ -225,9 +262,16 @@ export default {
   box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12) !important;
 }
 
+.artist-cover-wrap {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0.85rem 0;
+}
+
 .artist-cover {
   width: 72%;
-  margin: 0.85rem auto 0;
   border-radius: 0.5rem;
   aspect-ratio: 1 / 1;
   height: auto;
@@ -320,6 +364,10 @@ export default {
 
   .artist-cover {
     width: 82%;
+  }
+
+  .artist-cover-wrap {
+    min-height: 280px;
   }
 
   .artist-meta {

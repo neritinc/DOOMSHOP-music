@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import service from "@/api/artistService";
 import { storageUrl } from "@/utils/storageUrl";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
@@ -74,7 +74,7 @@ export const useArtistsViewStore = defineStore("artistsView", {
       const userStore = useUserLoginLogoutStore();
       if (!userStore.isAdmin || !artist?.artist_id) return;
       const artistName = String(artist.artist_name || "").trim() || "this artist";
-      const confirmed = window.confirm(`Delete artist \"${artistName}\"?`);
+      const confirmed = window.confirm(`Delete artist "${artistName}"?`);
       if (!confirmed) return;
 
       this.deletingArtistId = artist.artist_id;
@@ -199,3 +199,4 @@ export const useArtistsViewStore = defineStore("artistsView", {
     },
   },
 });
+

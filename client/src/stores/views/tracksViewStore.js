@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import service from "@/api/trackService";
 import genreService from "@/api/genreService";
 import artistService from "@/api/artistService";
@@ -126,7 +126,7 @@ export const useTracksViewStore = defineStore("tracksView", {
       const normalized = String(file).replace(/\\/g, "/").trim();
       if (/^https?:\/\//i.test(normalized)) return normalized;
       if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
-      return storageUrl(`tracks/${normalized}`);
+      return storageUrl(`track-covers/${normalized}`);
     },
     onImgError(e) {
       const img = e.target;
@@ -332,8 +332,11 @@ export const useTracksViewStore = defineStore("tracksView", {
       this.handleAudioSelected(file);
     },
     onAudioDrop(event) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
       this.isDraggingAudio = false;
-      const file = event.dataTransfer?.files?.[0] || null;
+      const itemFile = event.dataTransfer?.items?.[0]?.getAsFile?.() || null;
+      const file = itemFile || event.dataTransfer?.files?.[0] || null;
       this.syncAudioInputFile(file);
       this.handleAudioSelected(file);
     },
@@ -548,6 +551,16 @@ export const useTracksViewStore = defineStore("tracksView", {
     openCoverPicker() {
       this.refs?.coverInputRef?.value?.click?.();
     },
+    syncCoverInputFile(file) {
+      const input = this.refs?.coverInputRef?.value;
+      if (!input || !file) return;
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      } catch (_err) {
+      }
+    },
     setCoverFile(file) {
       this.coverFile = file;
       if (this.coverPreviewUrl) {
@@ -560,14 +573,18 @@ export const useTracksViewStore = defineStore("tracksView", {
       this.setCoverFile(file);
     },
     onCoverDrop(event) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
       this.isDraggingCover = false;
-      const file = event.dataTransfer?.files?.[0] || null;
+      const itemFile = event.dataTransfer?.items?.[0]?.getAsFile?.() || null;
+      const file = itemFile || event.dataTransfer?.files?.[0] || null;
       if (!file) return;
       if (!file.type.startsWith("image/")) {
         this.formError = "Only image files can be used as track cover.";
         return;
       }
       this.formError = "";
+      this.syncCoverInputFile(file);
       this.setCoverFile(file);
     },
     addGenreField() {
@@ -748,3 +765,4 @@ export const useTracksViewStore = defineStore("tracksView", {
     },
   },
 });
+

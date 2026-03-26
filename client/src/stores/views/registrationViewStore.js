@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import userService from "@/api/userService";
 import { useToastStore } from "@/stores/toastStore";
 
@@ -49,3 +49,4 @@ export const useRegistrationViewStore = defineStore("registrationView", {
     },
   },
 });
+

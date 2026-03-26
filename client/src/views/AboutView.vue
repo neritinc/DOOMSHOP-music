@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="about-page">
     <header class="about-hero">
       <div class="about-hero__content">
@@ -34,7 +34,14 @@
 </template>
 
 <script>
-export default {};
+import { useAboutViewStore } from "@/stores/views/aboutViewStore";
+
+export default {
+  setup() {
+    useAboutViewStore();
+    return {};
+  },
+};
 </script>
 
 <style scoped>
@@ -123,3 +130,4 @@ export default {};
   }
 }
 </style>
+

@@ -1,22 +1,16 @@
 <template>
   <div>
-    <!-- oldal fejléc -->
-    <!-- oldal címe -->
     <div class="d-flex align-items-center m-0 mb-2">
       <h1>{{ pageTitle }}</h1>
       <div class="d-flex align-items-center m-0 ms-2">
-        <!-- homokóra -->
         <i
           v-if="loading"
           class="bi bi-hourglass-split fs-3 col-auto p-0 pe-1"
         ></i>
-        <!-- új rekord ikon -->
-        <!-- <ButtonsCrudCreate v-if="!loading" @create="createHandler" /> -->
         <p class="m-0 ms-2">({{ getItemsLength }})</p>
       </div>
     </div>
 
-    <!-- táblázat -->
     <GenericTable
       :items="items"
       :columns="tableColumns"
@@ -30,7 +24,7 @@
       @sort="sortHandler"
       v-if="items.length > 0"
     />
-    <div v-else style="width: 100px" class="m-auto">Nincs találat</div>
+    <div v-else style="width: 100px" class="m-auto">No results</div>
 
     <FormUser
       ref="form"
@@ -39,7 +33,6 @@
       @yesEventForm="yesEventFormHandler"
     />
 
-    <!-- Confirm modal -->
     <ConfirmModal
       :isOpenConfirmModal="isOpenConfirmModal"
       @cancel="cancelHandler"
@@ -49,134 +42,56 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "pinia";
-//módosít
+import { ref, watch, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/userStore";
 import { useSearchStore } from "@/stores/searchStore";
-import { useToastStore } from "@/stores/toastStore";
+import { useUsersViewStore } from "@/stores/views/usersViewStore";
 import GenericTable from "@/components/Table/GenericTable.vue";
 import ConfirmModal from "@/components/Confirm/ConfirmModal.vue";
 import FormUser from "@/components/Forms/FormUser.vue";
+
 export default {
-  //módosít
-  name: "SchooClassView",
+  name: "UsersView",
   components: {
     GenericTable,
     ConfirmModal,
     FormUser,
   },
-  watch: {
-    searchWord() {
-      this.getAllSortSearch(this.sortColumn, this.sortDirection);
-    },
-  },
-  data() {
+  setup() {
+    const viewStore = useUsersViewStore();
+    const userStore = useUserStore();
+    const searchStore = useSearchStore();
+    const form = ref(null);
+
+    viewStore.bindRefs({ form });
+
+    const userRefs = storeToRefs(userStore);
+    const searchRefs = storeToRefs(searchStore);
+    const viewRefs = storeToRefs(viewStore);
+
+    watch(searchRefs.searchWord, async () => {
+      await viewStore.handleSearchChanged();
+    });
+
+    onMounted(async () => {
+      await viewStore.load();
+    });
+
     return {
-      //módosít
-      pageTitle: "Userek",
-      //módosít
-      tableColumns: [
-        { key: "id", label: "ID", debug: import.meta.env.VITE_DEBUG_MODE },
-        { key: "name", label: "User név", debug: 2 },
-        { key: "email", label: "Email", debug: 2 },
-        { key: "role", label: "Szerepkör", debug: 2 },
-      ],
-      //módosít
-      useCollectionStore: useUserStore,
-      isOpenConfirmModal: false,
-      toDeleteId: null,
-      state: "r", //crud
-      title: "",
+      ...userRefs,
+      ...searchRefs,
+      ...viewRefs,
+      form,
+      deleteHandler: viewStore.deleteHandler,
+      updateHandler: viewStore.updateHandler,
+      createHandler: viewStore.createHandler,
+      passwordChangeHandler: viewStore.passwordChangeHandler,
+      sortHandler: viewStore.sortHandler,
+      cancelHandler: viewStore.cancelHandler,
+      confirmHandler: viewStore.confirmHandler,
+      yesEventFormHandler: viewStore.yesEventFormHandler,
     };
-  },
-  computed: {
-    //módosít
-    ...mapState(useUserStore, ["item", "items", "loading", "getItemsLength"]),
-    ...mapState(useSearchStore, ["searchWord"]),
-  },
-  methods: {
-    //módosít
-    ...mapActions(useUserStore, [
-      "getAll",
-      "getAllSortSearch",
-      "getById",
-      "create",
-      "update",
-      "delete",
-      "clearItem",
-    ]),
-    ...mapActions(useSearchStore, ["resetSearchWord"]),
-    deleteHandler(id) {
-      this.state = "d";
-      this.isOpenConfirmModal = true;
-      this.toDeleteId = id;
-    },
-    updateHandler(id) {
-      this.state = "u";
-      this.title = "Adatmódosítás";
-      this.getById(id);
-      this.$refs.form.show();
-    },
-    createHandler() {
-      useToastStore().messages.push("Innen nem hozható létre user");
-      useToastStore().show("Error");
-      return;
-      // this.state = "c";
-      // this.title = "Új adatbevitel";
-      // this.clearItem();
-      // this.$refs.form.show();
-    },
-    passwordChangeHandler(id){
-      
-    },
-    sortHandler(column) {
-      this.getAllSortSearch(column);
-    },
-    cancelHandler() {
-      this.isOpenConfirmModal = false;
-      this.state = "r";
-    },
-    async confirmHandler() {
-      try {
-        await this.delete(this.toDeleteId);
-      } catch (error) {
-      }
-      this.isOpenConfirmModal = false;
-      this.state = "r";
-    },
-
-    async yesEventFormHandler({ item, done }) {
-      //vagy create, vagy update
-      try {
-        if (this.state == "c") {
-          //create
-          await this.create(item);
-        } else {
-          //update
-          await this.update(item.id, item);
-        }
-        //nem volt hiba
-        this.state = "r";
-        done(true);
-      } catch (err) {
-        //hiba volt
-        //nem csukódik le az ablak
-        if (err.response && err.response.status === 422) {
-          // Átadjuk a formnak a konkrét hibaüzeneteket (pl. "min 2 karakter")
-          this.$refs.form.setServerErrors(err.response.data.errors);
-          done(false); // Nyitva tartja a modalt
-        } else {
-          // Minden más hiba (500, 401) esetén is értesítjük a modalt, hogy ne záródjon be
-          done(false);
-        }
-        //átadom a hibát
-      }
-    },
-
-  },
-  async mounted() {
-    this.resetSearchWord();
-    await this.getAll();
   },
 };
 </script>

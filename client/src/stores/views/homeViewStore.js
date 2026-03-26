@@ -1,6 +1,7 @@
-﻿import { defineStore } from \"pinia\";
+﻿import { defineStore } from "pinia";
 
-export const useHomeViewStore = defineStore(\"homeView\", {
+export const useHomeViewStore = defineStore("homeView", {
   state: () => ({}),
   actions: {},
 });
+

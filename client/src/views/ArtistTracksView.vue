@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <RouterLink class="btn btn-outline-secondary btn-sm mb-3" to="/artists">Back to artists</RouterLink>
 
@@ -28,70 +28,34 @@
 </template>
 
 <script>
-import { RouterLink } from "vue-router";
-import trackService from "@/api/trackService";
-import artistService from "@/api/artistService";
-import { storageUrl } from "@/utils/storageUrl";
+import { computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { RouterLink, useRoute } from "vue-router";
+import { useArtistTracksViewStore } from "@/stores/views/artistTracksViewStore";
 
 export default {
   components: { RouterLink },
-  data() {
+  setup() {
+    const store = useArtistTracksViewStore();
+    const route = useRoute();
+    const storeRefs = storeToRefs(store);
+    const artistId = computed(() => Number(route.params.id));
+    const filteredTracks = computed(() => store.filteredTracks(artistId.value));
+
+    onMounted(async () => {
+      await store.load(artistId.value);
+    });
+
     return {
-      loading: true,
-      error: "",
-      artist: null,
-      tracks: [],
+      ...storeRefs,
+      artistId,
+      filteredTracks,
+      load: store.load,
+      coverUrl: store.coverUrl,
+      onImgError: store.onImgError,
+      trackId: store.trackId,
+      artistNames: store.artistNames,
     };
-  },
-  computed: {
-    artistId() {
-      return Number(this.$route.params.id);
-    },
-    artistName() {
-      return this.artist?.artist_name || "Artist Tracks";
-    },
-    filteredTracks() {
-      return this.tracks.filter((t) =>
-        (t.artists || []).some((a) => Number(a.artist_id) === this.artistId),
-      );
-    },
-  },
-  methods: {
-    async load() {
-      this.loading = true;
-      this.error = "";
-      try {
-        const [artistRes, tracksRes] = await Promise.all([
-          artistService.list(),
-          trackService.list(),
-        ]);
-        const artists = artistRes.data || [];
-        this.artist = artists.find((a) => Number(a.artist_id) === this.artistId) || null;
-        this.tracks = tracksRes.data || [];
-      } catch (err) {
-        this.error = err?.response?.data?.message || "Loading failed.";
-      } finally {
-        this.loading = false;
-      }
-    },
-    coverUrl(file) {
-      if (!file) return "https://placehold.co/600x340?text=Track";
-      if (String(file).startsWith("http://") || String(file).startsWith("https://")) return String(file);
-      if (String(file).includes("/")) return storageUrl(String(file).replace(/^storage\//, ""));
-      return storageUrl(`track-covers/${file}`);
-    },
-    onImgError(e) {
-      e.target.src = "https://placehold.co/600x340?text=No+Cover";
-    },
-    trackId(track) {
-      return track?.id ?? track?.track_id;
-    },
-    artistNames(track) {
-      return (track.artists || []).map((a) => a.artist_name).join(", ") || "-";
-    },
-  },
-  async mounted() {
-    await this.load();
   },
 };
 </script>
@@ -124,3 +88,4 @@ export default {
   font-weight: 600;
 }
 </style>
+

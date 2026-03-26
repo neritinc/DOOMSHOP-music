@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 
 export const useLoginViewStore = defineStore("loginView", {
@@ -14,3 +14,4 @@ export const useLoginViewStore = defineStore("loginView", {
     },
   },
 });
+

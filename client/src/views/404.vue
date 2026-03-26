@@ -1,18 +1,24 @@
 <template>
   <div>
-    <h1>Ez az oldal nem található</h1>
+    <h1>This page could not be found</h1>
     <p>
-        <RouterLink to="/">Home</RouterLink>
+      <RouterLink to="/">Home</RouterLink>
     </p>
   </div>
 </template>
 
 <script>
-export default {
+import { RouterLink } from "vue-router";
+import { useNotFoundViewStore } from "@/stores/views/notFoundViewStore";
 
-}
+export default {
+  components: { RouterLink },
+  setup() {
+    useNotFoundViewStore();
+    return {};
+  },
+};
 </script>
 
 <style>
-
 </style>

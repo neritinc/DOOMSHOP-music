@@ -82,10 +82,10 @@
 
     <ConfirmModal
       :isOpenConfirmModal="isDeleteModalOpen"
-      title="Genre torlese"
+      title="Delete Genre"
       :message="deleteMessage"
-      cancel="Megse"
-      confirm="Torles"
+      cancel="Cancel"
+      confirm="Delete"
       @cancel="closeDeleteModal"
       @confirm="confirmDelete"
     />
@@ -111,10 +111,30 @@ export default {
       await store.load();
     });
 
+    const {
+      load,
+      createOne,
+      startEdit,
+      cancelEdit,
+      saveEdit,
+      askDelete,
+      closeDeleteModal,
+      confirmDelete,
+      fieldError,
+    } = store;
+
     return {
       ...storeRefs,
-      ...store,
       isAdmin,
+      load,
+      createOne,
+      startEdit,
+      cancelEdit,
+      saveEdit,
+      askDelete,
+      closeDeleteModal,
+      confirmDelete,
+      fieldError,
     };
   },
 };

@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import service from "@/api/genreService";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
 
@@ -19,9 +19,9 @@ export const useGenresViewStore = defineStore("genresView", {
     deleteMessage(state) {
       const genreName = String(state.genreToDelete?.genre_name || "").trim();
       if (!genreName) {
-        return "Biztosan torolni szeretned ezt a mufajt?";
+        return "Are you sure you want to delete this genre?";
       }
-      return `Biztosan torolni szeretned ezt a mufajt: \"${genreName}\"?`;
+      return `Are you sure you want to delete this genre: "${genreName}"?`;
     },
   },
   actions: {
@@ -143,3 +143,4 @@ export const useGenresViewStore = defineStore("genresView", {
     },
   },
 });
+
