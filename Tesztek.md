@@ -6,35 +6,22 @@
 - [Kézi tesztelés (`request.rest`)](#kézi-tesztelés-requestrest)
 - [Backend tesztek](#backend-tesztek)
 - [Frontend tesztek](#frontend-tesztek)
-- [Bemutató tesztforgatókönyv](#bemutató-tesztforgatókönyv)
+- [Mintakódok](#mintakódok)
 - [Teszteredmények dokumentálása](#teszteredmények-dokumentálása)
 
 ## Kézi tesztelés (`request.rest`)
-Fájl:
-- `server/request.rest`
+Fájl: `server/request.rest`
 
-A kézi tesztcsomag ellenőrzi:
-- health endpoint: `GET /api/x`
-- admin + customer login
-- tracks CRUD jogosultság
-- genres/artists jogosultság
-- `usersme` profilműveletek
-- `carts` vs `my-carts` hozzáférés
-- `my-cart-items` műveletek
-- logout
-
-### Bejelentkezési minta
-- `POST /api/users/login`
-- token változók: `@admin_token`, `@customer_token`
-
-### CRUD minta
-- `POST /api/tracks` (admin: `201`, customer: `403`)
-- `GET /api/tracks` (admin és customer: `200`)
+Ellenőrzött területek:
+- login / logout
+- role alapú jogosultság (`admin` vs `customer`)
+- tracks CRUD elérés
+- usersme műveletek
+- carts és my-carts
 
 ## Backend tesztek
-**Keretrendszer:** PHPUnit
+Keretrendszer: PHPUnit
 
-Futtatás:
 ```bash
 cd server
 php artisan test
@@ -45,38 +32,80 @@ Példafájlok:
 - `server/tests/Feature/UserUpdateTest.php`
 - `server/tests/Unit/UserTest.php`
 
-Lefedett területek:
-- login/logout
-- user létrehozás
-- policy/jogosultság ellenőrzés
-- validációs hibák (`422`)
-
 ## Frontend tesztek
-**Teszttípusok:**
-- Vitest (unit/component)
+Tesztek:
+- Vitest (unit)
 - Cypress (E2E)
 
-Futtatás:
 ```bash
 cd client
 npm run test:unit
 npm run test:e2e
 ```
 
-Példa unit teszt:
-- `client/src/__tests__/App.spec.js`
+## Mintakódok
+### 1) Kézi teszt (request.rest) login minta
+```http
+POST {{host}}/api/users/login
+Accept: application/json
+Content-Type: application/json
 
-E2E alapfájlok:
-- `client/cypress.config.js`
-- `client/cypress/e2e/`
+{
+  "email": "admin@doomshoprecords.com",
+  "password": "admin123"
+}
+```
 
-## Bemutató tesztforgatókönyv
-1. Admin login
-2. Track létrehozás adminnal
-3. Ugyanez customer tokennel (`403`)
-4. Customer saját kosár létrehozás + tétel hozzáadás
-5. Customer `GET /api/carts` hívás (`403`)
-6. Checkout + logout
+### 2) Kézi teszt CRUD minta
+```http
+POST {{host}}/api/tracks
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "track_title": "Night Drive",
+  "genre_name": "Synthwave"
+}
+```
+
+### 3) Backend teszt minta (Feature)
+```php
+$response = $this->postJson('/api/users/login', [
+    'email' => $email,
+    'password' => $password,
+]);
+
+$response->assertStatus(200);
+```
+
+### 4) Backend validációs teszt minta
+```php
+$response = $this->patchJson("/api/users/{$admin->id}", [
+    'role' => 2,
+]);
+
+$response->assertStatus(422);
+```
+
+### 5) Frontend unit teszt minta (Vitest)
+```js
+it('mounts renders properly', () => {
+  const wrapper = mount(App, {
+    global: { plugins: [createTestingPinia()] },
+  });
+
+  expect(wrapper.exists()).toBe(true);
+});
+```
+
+### 6) Frontend E2E teszt minta (Cypress)
+```js
+it('Sikertelen login üres mezőkkel', () => {
+  cy.get('button[type="submit"]').click();
+  cy.get('form').should('have.class', 'was-validated');
+});
+```
 
 ## Teszteredmények dokumentálása
 Elérhető reportok:
@@ -84,8 +113,7 @@ Elérhető reportok:
 - `server/test-results.xml`
 - `server/test-results.html`
 
-Javasolt beadási bizonyíték:
-- kézi tesztfájl (`request.rest`)
-- backend/frontend tesztkód
-- futási kimenet vagy képernyőkép
-- rövid összegzés (mit validál az adott teszt)
+Beadáskor javasolt:
+- tesztfutás képernyőkép
+- reportfájlok csatolása
+- rövid összegzés (mi ment át / mi bukott)
