@@ -27,6 +27,12 @@
             <li class="nav-item">
               <RouterLink v-if="!isLoggedIn" class="nav-link" to="/login">Login</RouterLink>
               <div v-else class="d-flex align-items-center gap-2 px-2">
+                <img
+                  v-if="isAdmin"
+                  :src="adminAvatarUrl"
+                  alt="Admin avatar"
+                  class="admin-avatar-head"
+                />
                 <span class="small fw-semibold text-primary">{{ userNameWithRole }}</span>
                 <button
                   type="button"
@@ -72,6 +78,7 @@ const userLoginLogoutStore = useUserLoginLogoutStore();
 
 const { searchWord } = storeToRefs(searchStore);
 const { isLoggedIn, userNameWithRole, isAdmin } = storeToRefs(userLoginLogoutStore);
+const adminAvatarUrl = "/public/edyta.jpg";
 
 const searchWordInput = computed({
   get: () => searchWord.value,
@@ -192,6 +199,17 @@ const onClickLogout = async () => {
   border-radius: 999px;
   padding: 0.18rem 0.5rem;
   font-size: 0.74rem;
+}
+
+.admin-avatar-head {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center 38%;
+  border: 2px solid #d6e6ff;
+  box-shadow: 0 4px 10px rgba(30, 64, 175, 0.15);
+  flex: 0 0 auto;
 }
 
 @media (max-width: 767px) {
