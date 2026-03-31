@@ -3,7 +3,6 @@
     <audio ref="audioEl" :src="audioSrc" preload="metadata" @loadedmetadata="onLoadedMetadata" @timeupdate="onTimeUpdate" @ended="onEnded" @error="onError" />
 
     <div class="player-head">
-      <p class="kicker">Preview Player</p>
       <p class="track-title">{{ props.track?.track_title || "Selected Track" }}</p>
     </div>
 
@@ -51,11 +50,6 @@
           <i v-else class="bi bi-volume-up-fill icon-mute"></i>
         </button>
       </div>
-    </div>
-
-    <div class="status-line">
-      <span>{{ isPlaying ? "Playing preview" : "Ready to play" }}</span>
-      <span>{{ formatTime(duration) }} total</span>
     </div>
 
     <p v-if="loadError" class="error-text">A preview file nem toltheto be.</p>
@@ -198,17 +192,8 @@ watch(
   margin-bottom: 0.55rem;
 }
 
-.kicker {
-  margin: 0;
-  font-size: 0.68rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: #3b82f6;
-  font-weight: 800;
-}
-
 .track-title {
-  margin: 0.12rem 0 0;
+  margin: 0;
   color: #112649;
   font-weight: 700;
   font-size: 0.96rem;
@@ -358,17 +343,6 @@ watch(
   border: 2px solid #ffffff;
   background: #2563eb;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
-}
-
-.status-line {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.65rem;
-  color: #456188;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .error-text {

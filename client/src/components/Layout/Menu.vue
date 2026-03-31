@@ -21,7 +21,6 @@
             <li class="nav-item"><RouterLink class="nav-link" to="/genres">Genres</RouterLink></li>
             <li class="nav-item"><RouterLink class="nav-link" to="/artists">Artists</RouterLink></li>
             <li class="nav-item"><RouterLink class="nav-link" to="/albums">Albums</RouterLink></li>
-            <li v-if="isLoggedIn" class="nav-item"><RouterLink class="nav-link" to="/my-cart">My Cart</RouterLink></li>
             <li v-if="isAdmin" class="nav-item"><RouterLink class="nav-link" to="/admin-carts">All Carts</RouterLink></li>
             <li v-if="!isLoggedIn" class="nav-item"><RouterLink class="nav-link" to="/registration">Register</RouterLink></li>
             <li class="nav-item">
@@ -46,6 +45,10 @@
             </li>
           </ul>
           <form class="d-flex nav-search" role="search" @submit.prevent>
+            <RouterLink v-if="isCustomer" to="/my-cart" class="nav-cart-btn" aria-label="My cart">
+              <i class="bi bi-cart3" aria-hidden="true"></i>
+              <span v-if="cartItemCount > 0" class="nav-cart-badge">{{ cartItemCount }}</span>
+            </RouterLink>
             <input
               id="search"
               class="form-control me-2 nav-search-input"
@@ -65,11 +68,12 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useSearchStore } from "@/stores/searchStore";
 import { useUserLoginLogoutStore } from "@/stores/userLoginLogoutStore";
+import cartService from "@/api/cartService";
 
 const router = useRouter();
 
@@ -77,8 +81,9 @@ const searchStore = useSearchStore();
 const userLoginLogoutStore = useUserLoginLogoutStore();
 
 const { searchWord } = storeToRefs(searchStore);
-const { isLoggedIn, userNameWithRole, isAdmin } = storeToRefs(userLoginLogoutStore);
+const { isLoggedIn, userNameWithRole, isAdmin, isCustomer } = storeToRefs(userLoginLogoutStore);
 const adminAvatarUrl = "/public/edyta.jpg";
+const cartItemCount = ref(0);
 
 const searchWordInput = computed({
   get: () => searchWord.value,
@@ -95,6 +100,34 @@ const onClickLogout = async () => {
   await userLoginLogoutStore.logout();
   router.push("/");
 };
+
+const loadCartItemCount = async () => {
+  if (!isCustomer.value || !isLoggedIn.value) {
+    cartItemCount.value = 0;
+    return;
+  }
+  try {
+    const res = await cartService.myCartItems();
+    cartItemCount.value = Array.isArray(res?.data) ? res.data.length : 0;
+  } catch (_err) {
+    cartItemCount.value = 0;
+  }
+};
+
+const onCartUpdated = () => loadCartItemCount();
+
+onMounted(() => {
+  loadCartItemCount();
+  window.addEventListener("cart-updated", onCartUpdated);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("cart-updated", onCartUpdated);
+});
+
+watch([isCustomer, isLoggedIn], () => {
+  loadCartItemCount();
+});
 </script>
 
 <style scoped>
@@ -167,6 +200,41 @@ const onClickLogout = async () => {
 .nav-search-icon:hover {
   color: #1d4ed8;
   transform: scale(1.06);
+}
+
+.nav-cart-btn {
+  position: relative;
+  margin-right: 2rem;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.nav-cart-badge {
+  position: absolute;
+  top: -7px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e61919;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45);
+}
+
+.nav-cart-btn:hover {
+  transform: translateY(-1px);
+  color: #1e40af;
 }
 
 .nav-toggler {

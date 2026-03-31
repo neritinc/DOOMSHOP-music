@@ -5,7 +5,7 @@
     <div v-if="loading" class="alert alert-info">Loading track...</div>
     <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <div v-else-if="track" class="track-layout card shadow-sm">
+    <div v-else-if="track" class="track-layout">
       <div class="layout-left">
         <img class="detail-cover" :src="coverUrl(track.track_cover)" :alt="track.track_title" @error="onImgError" />
 
@@ -26,18 +26,17 @@
       </div>
 
       <div class="layout-right">
-        <p class="crumb-line">Home / Tracks / {{ firstArtist(track) }} / {{ track.track_title }}</p>
+        <div class="right-top">
+          <p class="crumb-line">Home / Tracks / {{ firstArtist(track) }} / {{ track.track_title }}</p>
 
-        <div class="artist-stack">
-          <p v-for="a in track.artists || []" :key="a.artist_id" class="artist-top">{{ a.artist_name }}</p>
+          <div v-if="isCustomer" class="artist-chips">
+            <span v-for="a in track.artists || []" :key="`chip-${a.artist_id}`" class="chip">{{ a.artist_name }}</span>
+          </div>
+
+          <h1 class="detail-title">{{ track.track_title }}</h1>
         </div>
-        <div v-if="isCustomer" class="artist-chips">
-          <span v-for="a in track.artists || []" :key="`chip-${a.artist_id}`" class="chip">{{ a.artist_name }}</span>
-        </div>
 
-        <h1 class="detail-title">{{ track.track_title }}</h1>
-
-        <div class="player-wrap">
+        <div class="player-wrap right-player">
           <div v-if="isAdmin" class="admin-player">
             <div class="d-flex gap-2 align-items-center mb-2">
               <button class="btn btn-outline-dark btn-sm" type="button" @click="toggleAdminTrackPlay(adminTrackAudioRef)" :disabled="!adminSourceUrl(track)">
@@ -77,7 +76,7 @@
           <small v-else class="text-muted">Login needed for playback preview.</small>
         </div>
 
-        <div class="after-player">
+        <div class="after-player right-actions">
           <RouterLink
             v-if="track.album?.id && track.album?.title"
             class="album-cta mt-2"
@@ -355,22 +354,23 @@ export default {
 <style scoped>
 .track-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 480px) minmax(320px, 1fr);
-  gap: 3.4rem;
+  grid-template-columns: minmax(340px, 520px) minmax(420px, 1fr);
+  gap: 3.2rem;
   align-items: start;
-  padding: 1.35rem 1.35rem 1.5rem;
-  border: 1px solid #d9e5f7;
-  border-radius: 16px;
-  background:
-    radial-gradient(900px 320px at 0% -20%, rgba(59, 130, 246, 0.08), transparent 55%),
-    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  padding: 1.25rem 1rem 1rem;
+  border: 1px solid #dbe8fb;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f6fd 100%);
+  box-shadow: 0 10px 22px rgba(30, 58, 110, 0.08);
+  max-width: 1180px;
+  margin: 0 auto;
 }
 
 .layout-left {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1.2rem;
 }
 
 .detail-cover {
@@ -414,21 +414,26 @@ export default {
 
 .layout-right {
   min-width: 0;
-  padding: 0.45rem 0.1rem;
+  padding: 0.45rem 0.6rem 0.6rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 1.1rem;
+}
+
+.right-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .crumb-line {
-  margin: 0 0 1.05rem;
+  margin: 0;
   color: #4b5563;
   font-size: 0.92rem;
 }
 
-.artist-stack { margin-bottom: 0.75rem; }
-.artist-top { margin: 0; color: #2563eb; font-weight: 600; }
-.artist-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.9rem; }
+.artist-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.4rem; }
 .chip {
   font-size: 0.76rem;
   font-weight: 700;
@@ -440,24 +445,29 @@ export default {
 }
 
 .detail-title {
-  margin: 0 0 1.05rem;
+  margin: 0;
   font-size: clamp(1.5rem, 3vw, 2.6rem);
   line-height: 1.03;
   letter-spacing: 0.01em;
   color: #0f172a;
   font-weight: 800;
-  max-width: 20ch;
+  max-width: 18ch;
 }
 
 .player-wrap {
-  max-width: 620px;
-  border: 1px solid #dbe8fb;
-  border-radius: 14px;
-  background: #fbfdff;
-  padding: 0.8rem 0.85rem;
+  max-width: 560px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
-.after-player { margin-top: 0.9rem; }
+.right-player { margin-top: 0.1rem; }
+
+.after-player { margin-top: 0; }
+
+.right-actions { max-width: 560px; }
 .album-cta {
   display: inline-flex;
   align-items: center;
@@ -483,36 +493,40 @@ export default {
 .cart-cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  border: none;
-  border-radius: 999px;
-  padding: 0.55rem 0.95rem;
-  font-size: 0.86rem;
+  gap: 0.55rem;
+  border: 1px solid #2d67e3;
+  border-radius: 12px;
+  padding: 0.66rem 1.15rem;
+  min-height: 44px;
+  font-size: 0.95rem;
   font-weight: 700;
+  letter-spacing: 0;
   color: #ffffff;
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
-  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.28);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  background: linear-gradient(135deg, #1f57d6 0%, #2f6fe9 100%);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .cart-cta:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(29, 78, 216, 0.35);
-  filter: saturate(1.08);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+  filter: brightness(1.02);
 }
 
 .cart-cta:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
 }
 
 .cart-cta:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.35);
-  outline-offset: 2px;
+  outline: 3px solid rgba(96, 165, 250, 0.45);
+  outline-offset: 3px;
 }
 
 .cart-cta:disabled {
-  opacity: 0.7;
+  opacity: 0.72;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .cart-cta__icon {
@@ -523,8 +537,16 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 576px) {
+  .cart-cta {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .card.card-body {
@@ -605,14 +627,17 @@ export default {
 @media (max-width: 992px) {
   .track-layout {
     grid-template-columns: 1fr;
-    padding: 0.9rem;
-    gap: 1.5rem;
+    padding: 0.9rem 0;
+    gap: 1.8rem;
   }
   .detail-cover, .detail-facts, .player-wrap {
     max-width: 100%;
   }
   .detail-title {
     max-width: 100%;
+  }
+  .layout-right {
+    gap: 0.9rem;
   }
 }
 </style>

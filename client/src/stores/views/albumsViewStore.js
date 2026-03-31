@@ -139,6 +139,7 @@ export const useAlbumsViewStore = defineStore("albumsView", {
           album_id: album.id,
           pcs: 1,
         });
+        window.dispatchEvent(new Event("cart-updated"));
         this.cartMessageByAlbumId = {
           ...this.cartMessageByAlbumId,
           [album.id]: "Album added to cart.",

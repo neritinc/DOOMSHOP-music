@@ -478,6 +478,7 @@ export const useTrackDetailViewStore = defineStore("trackDetailView", {
           pcs: 1,
         });
         this.cartMessage = "Track added to cart.";
+        window.dispatchEvent(new Event("cart-updated"));
       } catch (err) {
         this.cartError = err?.response?.data?.message || "Could not add track to cart.";
       } finally {

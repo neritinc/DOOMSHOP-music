@@ -150,6 +150,7 @@ export const useMyCartViewStore = defineStore("myCartView", {
       try {
         await service.deleteMyCartItem(id);
         await this.load();
+        window.dispatchEvent(new Event("cart-updated"));
         this.closeDeleteModal();
       } catch (err) {
         this.deleteError = this.extractErrorMessage(err, "Could not delete cart item.");
@@ -170,6 +171,7 @@ export const useMyCartViewStore = defineStore("myCartView", {
         const res = await service.checkoutMyCart(this.cartId, { email: this.checkoutEmail });
         this.checkoutResult = res?.data || null;
         await this.load();
+        window.dispatchEvent(new Event("cart-updated"));
         this.showCheckoutModal = false;
       } catch (err) {
         this.checkoutError = this.extractErrorMessage(err, "Could not send the email.");
