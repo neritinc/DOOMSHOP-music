@@ -1,97 +1,61 @@
-﻿# RADME.md
+﻿# A szoftver működésének műszaki feltételei
 
-> A szoftver működésének műszaki feltételei (DOOMSHOP-music)
+## A fejlesztési környezethez szükséges szoftverek
+- Operációs rendszer: Windows 10/11, Linux vagy macOS
+- PHP: 8.2+
+- Composer: 2.x
+- Node.js: 20.19+ (a `client/package.json` alapján)
+- NPM: Node.js-hez tartozó csomagkezelő
+- MySQL/MariaDB: adatbázis szerver
+- Git: forráskód kezelés
+- Ajánlott eszközök: VS Code, Postman vagy REST Client
 
-## Tartalom
-- [Projekt röviden](#projekt-röviden)
-- [Szükséges szoftverek](#szükséges-szoftverek)
-- [Repo szerkezet](#repo-szerkezet)
-- [Telepítés és futtatás](#telepítés-és-futtatás)
-- [Tesztek futtatása](#tesztek-futtatása)
-- [Kötelező beadandó fájlok](#kötelező-beadandó-fájlok)
-
-## Projekt röviden
-A **DOOMSHOP-music** egy Laravel + Vue alapú zenei webshop alkalmazás.
-
-## Szükséges szoftverek
-| Eszköz | Verzió |
-|---|---|
-| Git | aktuális |
-| PHP | 8.2+ |
-| Composer | 2+ |
-| Node.js | 20+ |
-| npm | 10+ |
-| MySQL | 8+ |
-| FFmpeg + FFprobe | preview generáláshoz |
-
-## Repo szerkezet
-```text
-DOOMSHOP-music/
-├── server/
-├── client/
-└── DokumnetacioKepek/
-```
-
-## Telepítés és futtatás
-### 1) Forráskód letöltése
+## Forráskód letöltése
 ```bash
 git clone <repo-url>
 cd DOOMSHOP-music
 ```
 
-### 2) Backend (`server/`)
+## A program teszt környezetének telepítése, futtatása
+
+### 1. Backend (Laravel) telepítés
 ```bash
 cd server
 composer install
 copy .env.example .env
 php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
-php artisan serve
 ```
 
-Elérés:
-- Backend: `http://127.0.0.1:8000`
-- API: `http://127.0.0.1:8000/api`
+`.env` fájlban állítsd be legalább ezeket:
+- `DB_CONNECTION=mysql`
+- `DB_HOST=127.0.0.1`
+- `DB_PORT=3306`
+- `DB_DATABASE=doomshop`
+- `DB_USERNAME=...`
+- `DB_PASSWORD=...`
 
-### 3) Frontend (`client/`)
+Migráció + seed:
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
+
+Backend indítás:
+```bash
+php artisan serve
+```
+Alap API: `http://127.0.0.1:8000/api`
+
+### 2. Frontend (Vue + Vite) telepítés
+Új terminálban:
 ```bash
 cd client
 npm install
 npm run dev
 ```
+Frontend: `http://localhost:5173`
 
-Elérés:
-- Frontend: `http://localhost:5173`
-
-## Tesztek futtatása
-### Backend
-```bash
-cd server
-php artisan test
-```
-
-### Frontend unit
-```bash
-cd client
-npm run test:unit
-```
-
-### Frontend E2E
-```bash
-cd client
-npm run test:e2e
-```
-
-## Kötelező beadandó fájlok
-- [x] `RADME.md`
-- [x] `Dokumentáció.md`
-- [x] `Tesztek.md`
-- [x] `Diagram.png`
-- [x] `AdatbazisBackup.sql`
-
-## Vizsgakövetelmény megfelelés (rövid)
-- [x] Életszerű probléma megoldása
-- [x] CRUD műveletek
-- [x] RESTful szerver + kliens
-- [x] Autentikáció és jogosultságkezelés
+### 3. Gyors ellenőrzés
+- Backend health endpoint: `GET /api/x`
+- Bejelentkezés minta: `POST /api/users/login`
+- Kézi API tesztek: `server/request.rest`

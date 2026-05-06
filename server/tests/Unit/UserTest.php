@@ -74,7 +74,17 @@ class UserTest extends TestCase
 
     public function test_check_if_users_getting_fetched_with_id(): void
     {
-        $this->markTestSkipped('Ideiglenesen kiiktatva.');
+        $admin = User::where('email', 'admin@doomshoprecords.com')->first();
+        $this->assertNotNull($admin);
+
+        $foundByEloquent = User::find($admin->id);
+        $this->assertNotNull($foundByEloquent);
+        $this->assertSame($admin->id, $foundByEloquent->id);
+        $this->assertSame('admin@doomshoprecords.com', $foundByEloquent->email);
+
+        $foundByQuery = DB::table('users')->where('id', $admin->id)->first();
+        $this->assertNotNull($foundByQuery);
+        $this->assertSame($admin->id, $foundByQuery->id);
     }
 
     public function test_users_table_record_number(): void

@@ -1,50 +1,17 @@
-﻿# Tesztek
+﻿# A tesztekhez végzett kód, valamint a teszteredmények dokumentációja
 
-> Projekt: **DOOMSHOP-music**
+## Kézi teszt: pingelés (request rest)
 
-## Tartalom
-- [Kézi tesztelés (`request.rest`)](#kézi-tesztelés-requestrest)
-- [Backend tesztek](#backend-tesztek)
-- [Frontend tesztek](#frontend-tesztek)
-- [Mintakódok](#mintakódok)
-- [Teszteredmények dokumentálása](#teszteredmények-dokumentálása)
-
-## Kézi tesztelés (`request.rest`)
+### request.rest szerkezete
 Fájl: `server/request.rest`
 
-Ellenőrzött területek:
-- login / logout
-- role alapú jogosultság (`admin` vs `customer`)
-- tracks CRUD elérés
-- usersme műveletek
-- carts és my-carts
+Szerkezeti elemek:
+- Környezeti változók (`@host`, `@admin_token`, `@customer_token`)
+- Egymásra épülő kérések `@name` hivatkozásokkal
+- Jogosultsági mátrix tesztek (admin/customer)
+- Login -> CRUD -> logout folyamat
 
-## Backend tesztek
-Keretrendszer: PHPUnit
-
-```bash
-cd server
-php artisan test
-```
-
-Példafájlok:
-- `server/tests/Feature/UserTest.php`
-- `server/tests/Feature/UserUpdateTest.php`
-- `server/tests/Unit/UserTest.php`
-
-## Frontend tesztek
-Tesztek:
-- Vitest (unit)
-- Cypress (E2E)
-
-```bash
-cd client
-npm run test:unit
-npm run test:e2e
-```
-
-## Mintakódok
-### 1) Kézi teszt (request.rest) login minta
+### Bejelentkezés
 ```http
 POST {{host}}/api/users/login
 Accept: application/json
@@ -56,64 +23,104 @@ Content-Type: application/json
 }
 ```
 
-### 2) Kézi teszt CRUD minta
+### Minta kód CRUD műveletekre
 ```http
+### Create (admin)
 POST {{host}}/api/tracks
-Accept: application/json
-Content-Type: application/json
 Authorization: Bearer {{admin_token}}
+Content-Type: application/json
 
 {
   "track_title": "Night Drive",
   "genre_name": "Synthwave"
 }
+
+### Read
+GET {{host}}/api/tracks
+Accept: application/json
+
+### Update
+PATCH {{host}}/api/users/{{customer_id}}
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "city": "Chicago"
+}
+
+### Delete
+DELETE {{host}}/api/my-cart-items/{{my_item_id}}
+Authorization: Bearer {{customer_token}}
 ```
 
-### 3) Backend teszt minta (Feature)
-```php
-$response = $this->postJson('/api/users/login', [
-    'email' => $email,
-    'password' => $password,
-]);
+## Backend tesztek
 
-$response->assertStatus(200);
+### Unit tesztek
+- `server/tests/Unit/ExampleTest.php`
+- `server/tests/Unit/UserTest.php`
+
+### Funkcionális tesztek
+- `server/tests/Feature/UserTest.php`
+- `server/tests/Feature/UserUpdateTest.php`
+- `server/tests/Feature/CustomerCartFlowTest.php`
+
+### End-point tesztek
+Az API endpointok viselkedését a feature tesztek és a `request.rest` együtt ellenőrzik:
+- autentikáció (`/users/login`, `/users/logout`)
+- jogosultság (`ability:admin`, self endpointok)
+- CRUD endpointok (`tracks`, `genres`, `artists`, `carts`, `cart-items`)
+
+### Backend tesztek futtatása
+```bash
+cd server
+php artisan test
 ```
 
-### 4) Backend validációs teszt minta
-```php
-$response = $this->patchJson("/api/users/{$admin->id}", [
-    'role' => 2,
-]);
-
-$response->assertStatus(422);
-```
-
-### 5) Frontend unit teszt minta (Vitest)
-```js
-it('mounts renders properly', () => {
-  const wrapper = mount(App, {
-    global: { plugins: [createTestingPinia()] },
-  });
-
-  expect(wrapper.exists()).toBe(true);
-});
-```
-
-### 6) Frontend E2E teszt minta (Cypress)
-```js
-it('Sikertelen login üres mezőkkel', () => {
-  cy.get('button[type="submit"]').click();
-  cy.get('form').should('have.class', 'was-validated');
-});
-```
-
-## Teszteredmények dokumentálása
-Elérhető reportok:
+### Teszt lefutási képernyőkép dokumentálása
+A repo tartalmaz mentett futási eredményeket:
 - `server/test-results.txt`
-- `server/test-results.xml`
 - `server/test-results.html`
 
-Beadáskor javasolt:
-- tesztfutás képernyőkép
-- reportfájlok csatolása
-- rövid összegzés (mi ment át / mi bukott)
+Javaslat képernyőképekhez:
+1. Terminál futás zöld tesztekkel
+2. Sikertelen teszt példa és javítás utáni újrafuttatás
+
+## Frontend tesztek
+
+### Teszt fajta megnevezése: Vitest, E2E test (Cypress)
+- Unit/component: Vitest
+- End-to-end: Cypress
+
+### Futtatás
+```bash
+cd client
+npm run test:unit
+npm run test:e2e
+```
+
+### Néhány tipikus teszt mintakód, magyarázat
+Vitest (komponens mount):
+```js
+import { mount } from '@vue/test-utils'
+import App from '@/App.vue'
+
+it('App komponens betöltődik', () => {
+  const wrapper = mount(App)
+  expect(wrapper.exists()).toBe(true)
+})
+```
+
+Cypress (űrlap validáció):
+```js
+it('Sikertelen login üres mezőkkel', () => {
+  cy.visit('/login')
+  cy.get('button[type="submit"]').click()
+  cy.get('form').should('have.class', 'was-validated')
+})
+```
+
+### A teszt eredményének dokumentálása
+- Backend teszteredmény fájlban: `server/test-results.txt`, `server/test-results.html`
+- Frontend esetén javasolt:
+  - Vitest kimenet mentése fájlba (`npm run test:unit > vitest-results.txt`)
+  - Cypress report vagy screenshot/video mentés a Cypress output könyvtárból
