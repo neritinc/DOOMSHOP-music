@@ -1,57 +1,165 @@
-### =========================================================
-### DOOMSHOP API - Permission Matrix Test Collection
-### Roles: Admin (1), Customer (2)
-### =========================================================
-
+### változók
 @protocol = http://
 @hostname = 127.0.0.1
 @port = 8000
 @host = {{protocol}}{{hostname}}:{{port}}
 
-### ---------------------------------------------------------
-### 0) Health
-### ---------------------------------------------------------
+### seedelt login adatok
+@admin_email = admin@doomshoprecords.com
+@admin_password = admin123
+@customer_email = customer@doomshoprecords.com
+@customer_password = customer123
+
+### dinamikus teszt adatok
+@run = {{$timestamp}}
+
+### health
 GET {{host}}/api/x
 Accept: application/json
 
-### ---------------------------------------------------------
-### 1) Login - Admin
-### ---------------------------------------------------------
+
+### ADMIN LOGIN
 # @name login_admin
 POST {{host}}/api/users/login
 Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "admin@doomshoprecords.com",
-  "password": "admin123"
+  "email": "{{admin_email}}",
+  "password": "{{admin_password}}"
 }
 
+###
 @admin_token = {{login_admin.response.body.data.token}}
 @admin_id = {{login_admin.response.body.data.id}}
 
-### ---------------------------------------------------------
-### 2) Login - Customer
-### ---------------------------------------------------------
+
+### CUSTOMER LOGIN
 # @name login_customer
 POST {{host}}/api/users/login
 Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "customer@doomshoprecords.com",
-  "password": "customer123"
+  "email": "{{customer_email}}",
+  "password": "{{customer_password}}"
 }
 
+###
 @customer_token = {{login_customer.response.body.data.token}}
 @customer_id = {{login_customer.response.body.data.id}}
 
-### ---------------------------------------------------------
-### 3) MUSIC - Create track
-### Admin: YES | Customer: NO
-### ---------------------------------------------------------
 
-### 3.1 Admin creates track (expected: 201)
+### alap token (admin)
+@token = {{admin_token}}
+
+
+// -------------------------------
+// USERSME (self)
+// -------------------------------
+
+### me
+GET {{host}}/api/usersme
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### self update (name/email)
+PATCH {{host}}/api/usersme
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "name": "Customer {{$timestamp}}"
+}
+
+### self password update
+PATCH {{host}}/api/usersmeupdatepassword
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "oldpassword": "customer123",
+  "newpassword": "customer123",
+  "newpassword_confirmation": "customer123"
+}
+
+### self delete (VESZELYES - csak teszt useren futtasd)
+DELETE {{host}}/api/usersme
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+
+// -------------------------------
+// USERS (admin)
+// -------------------------------
+
+### get users
+GET {{host}}/api/users
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### get user by id
+GET {{host}}/api/users/{{customer_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### post user (admin)
+# @name create_user_admin
+POST {{host}}/api/users
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "name": "doomshop_user_{{run}}",
+  "email": "doomshop_user_{{run}}@example.com",
+  "password": "123",
+  "role": 2
+}
+
+###
+@new_user_id = {{create_user_admin.response.body.data.id}}
+
+### patch user (admin)
+PATCH {{host}}/api/users/{{new_user_id}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "city": "Budapest"
+}
+
+### delete user (admin)
+DELETE {{host}}/api/users/{{new_user_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// TRACKS
+// -------------------------------
+
+### get tracks (public)
+GET {{host}}/api/tracks
+Accept: application/json
+
+### get track by id (public)
+GET {{host}}/api/tracks/1
+Accept: application/json
+
+### get track preview stream
+GET {{host}}/api/tracks/1/preview
+Accept: application/json
+
+### get track source stream (admin token javasolt)
+GET {{host}}/api/tracks/1/source
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### post track (admin)
 # @name create_track_admin
 POST {{host}}/api/tracks
 Accept: application/json
@@ -59,50 +167,66 @@ Content-Type: application/json
 Authorization: Bearer {{admin_token}}
 
 {
-  "track_title": "Night Drive",
-  "genre_name": "Synthwave",
-  "bpm_value": 122,
-  "release_date": "2026-03-05",
-  "track_length_sec": 215,
-  "track_cover": "covers/night-drive.jpg",
-  "track_path": "tracks/night-drive.mp3",
-  "artist_names": ["DOOMSHOP Artist"]
+  "track_title": "REST Track {{run}}",
+  "genre_name": "Phonk",
+  "track_path": "tracks/demo.mp3",
+  "artist_names": ["REST Artist {{run}}"],
+  "release_date": "2026-05-06",
+  "track_length_sec": 180,
+  "preview_start_at": 0,
+  "preview_end_at": 30
 }
 
+###
 @track_id = {{create_track_admin.response.body.data.id}}
 
-### 3.2 Customer tries to create track (expected: 403)
-POST {{host}}/api/tracks
+### patch track (admin)
+PATCH {{host}}/api/tracks/{{track_id}}
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer {{customer_token}}
+Authorization: Bearer {{admin_token}}
 
 {
-  "track_title": "Customer Forbidden Track",
-  "genre_name": "Trap"
+  "track_title": "REST Track {{run}} Updated",
+  "genre_name": "Phonk",
+  "track_path": "tracks/demo.mp3",
+  "artist_names": ["REST Artist {{run}}"],
+  "release_date": "2026-05-06",
+  "track_length_sec": 200,
+  "preview_start_at": 0,
+  "preview_end_at": 30
 }
 
-### ---------------------------------------------------------
-### 4) MUSIC - Read tracks
-### Admin: YES | Customer: YES
-### ---------------------------------------------------------
+### regenerate preview (admin)
+POST {{host}}/api/tracks/{{track_id}}/regenerate-preview
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
 
-### 4.1 Admin reads all tracks (expected: 200)
-GET {{host}}/api/tracks
+{
+  "preview_start_at": 5,
+  "preview_end_at": 25
+}
+
+### delete track (admin)
+DELETE {{host}}/api/tracks/{{track_id}}
 Accept: application/json
 Authorization: Bearer {{admin_token}}
 
-### 4.2 Customer reads all tracks (expected: 200)
-GET {{host}}/api/tracks
+
+// -------------------------------
+// GENRES
+// -------------------------------
+
+### get genres (public)
+GET {{host}}/api/genres
 Accept: application/json
-Authorization: Bearer {{customer_token}}
 
-### ---------------------------------------------------------
-### 5) GENRES / ARTISTS - Manage
-### Admin: YES | Customer: NO
-### ---------------------------------------------------------
+### get genre by id (public)
+GET {{host}}/api/genres/1
+Accept: application/json
 
-### 5.1 Admin creates genre (expected: 201)
+### post genre (admin)
 # @name create_genre_admin
 POST {{host}}/api/genres
 Accept: application/json
@@ -110,22 +234,41 @@ Content-Type: application/json
 Authorization: Bearer {{admin_token}}
 
 {
-  "genre_name": "Phonk"
+  "genre_name": "REST Genre {{run}}"
 }
 
+###
 @genre_id = {{create_genre_admin.response.body.data.genre_id}}
 
-### 5.2 Customer tries to create genre (expected: 403)
-POST {{host}}/api/genres
+### patch genre (admin)
+PATCH {{host}}/api/genres/{{genre_id}}
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer {{customer_token}}
+Authorization: Bearer {{admin_token}}
 
 {
-  "genre_name": "Forbidden Genre"
+  "genre_name": "REST Genre {{run}} Updated"
 }
 
-### 5.3 Admin creates artist (expected: 201)
+### delete genre (admin)
+DELETE {{host}}/api/genres/{{genre_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// ARTISTS
+// -------------------------------
+
+### get artists (public)
+GET {{host}}/api/artists
+Accept: application/json
+
+### get artist by id (public)
+GET {{host}}/api/artists/1
+Accept: application/json
+
+### post artist (admin)
 # @name create_artist_admin
 POST {{host}}/api/artists
 Accept: application/json
@@ -133,81 +276,162 @@ Content-Type: application/json
 Authorization: Bearer {{admin_token}}
 
 {
-  "artist_name": "Doomshop Crew",
-  "artist_picture": "artists/doomshop-crew.jpg"
+  "artist_name": "REST Artist {{run}}",
+  "artist_picture": "artists/rest-artist.jpg"
 }
 
+###
 @artist_id = {{create_artist_admin.response.body.data.artist_id}}
 
-### 5.4 Customer tries to create artist (expected: 403)
-POST {{host}}/api/artists
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer {{customer_token}}
-
-{
-  "artist_name": "Forbidden Artist"
-}
-
-### ---------------------------------------------------------
-### 6) PROFILE - Own profile edit
-### Admin: YES | Customer: YES
-### ---------------------------------------------------------
-
-### 6.1 Admin updates own profile (expected: 200)
-PATCH {{host}}/api/usersme
+### patch artist (admin)
+PATCH {{host}}/api/artists/{{artist_id}}
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{admin_token}}
 
 {
-  "city": "Los Angeles",
-  "street": "Sunset Blvd"
+  "artist_name": "REST Artist {{run}} Updated",
+  "artist_picture": "artists/rest-artist-updated.jpg"
 }
 
-### 6.2 Customer updates own profile (expected: 200)
-PATCH {{host}}/api/usersme
+### delete artist (admin)
+DELETE {{host}}/api/artists/{{artist_id}}
 Accept: application/json
-Content-Type: application/json
-Authorization: Bearer {{customer_token}}
+Authorization: Bearer {{admin_token}}
 
-{
-  "city": "New York",
-  "street": "Broadway"
-}
 
-### ---------------------------------------------------------
-### 7) PROFILE - Edit other users
-### Admin: YES | Customer: NO
-### ---------------------------------------------------------
+// -------------------------------
+// ALBUMS
+// -------------------------------
 
-### 7.1 Admin edits customer (expected: 200)
-PATCH {{host}}/api/users/{{customer_id}}
+### get albums (public)
+GET {{host}}/api/albums
+Accept: application/json
+
+### get album by id (public)
+GET {{host}}/api/albums/1
+Accept: application/json
+
+### post album (admin)
+# @name create_album_admin
+POST {{host}}/api/albums
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{admin_token}}
 
 {
-  "role": 2,
-  "city": "Chicago"
+  "title": "REST Album {{run}}",
+  "cover": "album-covers/rest-album.jpg",
+  "release_date": "2026-05-06",
+  "price_eur": 9.99,
+  "description": "REST created album",
+  "is_active": true
 }
 
-### 7.2 Customer tries to edit admin (expected: 403)
-PATCH {{host}}/api/users/{{admin_id}}
+###
+@album_id = {{create_album_admin.response.body.data.id}}
+
+### patch album (admin)
+PATCH {{host}}/api/albums/{{album_id}}
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer {{customer_token}}
+Authorization: Bearer {{admin_token}}
 
 {
-  "city": "Blocked City"
+  "title": "REST Album {{run}} Updated",
+  "cover": "album-covers/rest-album-updated.jpg",
+  "release_date": "2026-05-06",
+  "price_eur": 10.49,
+  "description": "REST updated album",
+  "is_active": true
 }
 
-### ---------------------------------------------------------
-### 8) CARTS - Own cart management / all carts visibility
-### Matrix target: own cart BOTH, all carts ADMIN only
-### ---------------------------------------------------------
+### sync album tracks (admin)
+PATCH {{host}}/api/albums/{{album_id}}/tracks
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
 
-### 8.1 Admin creates cart for customer (expected: 201)
+{
+  "track_ids": [1]
+}
+
+### delete album (admin)
+DELETE {{host}}/api/albums/{{album_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// LIVESHOW LINKS
+// -------------------------------
+
+### get liveshow-links (public)
+GET {{host}}/api/liveshow-links
+Accept: application/json
+
+### post liveshow-link (admin)
+# @name create_liveshow_link_admin
+POST {{host}}/api/liveshow-links
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "title": "REST Live {{run}}",
+  "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "sort_order": 99
+}
+
+###
+@liveshow_id = {{create_liveshow_link_admin.response.body.data.id}}
+
+### delete liveshow-link (admin)
+DELETE {{host}}/api/liveshow-links/{{liveshow_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// RECOMMENDATION LINKS
+// -------------------------------
+
+### get recommendation-links (public)
+GET {{host}}/api/recommendation-links
+Accept: application/json
+
+### post recommendation-link (admin)
+# @name create_recommendation_link_admin
+POST {{host}}/api/recommendation-links
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "title": "REST Recommendation {{run}}",
+  "media_url": "https://soundcloud.com/forss/flickermood",
+  "sort_order": 99
+}
+
+###
+@recommendation_id = {{create_recommendation_link_admin.response.body.data.id}}
+
+### delete recommendation-link (admin)
+DELETE {{host}}/api/recommendation-links/{{recommendation_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// CARTS (admin + self)
+// -------------------------------
+
+### get carts (admin)
+GET {{host}}/api/carts
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### post cart (admin)
 # @name create_cart_admin
 POST {{host}}/api/carts
 Accept: application/json
@@ -216,91 +440,194 @@ Authorization: Bearer {{admin_token}}
 
 {
   "user_id": {{customer_id}},
-  "date": "2026-03-05"
+  "date": "2026-05-06"
 }
 
+###
 @cart_id = {{create_cart_admin.response.body.data.id}}
 
-### 8.2 Admin adds cart item (expected: 201)
-POST {{host}}/api/cart-items
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer {{admin_token}}
-
-{
-  "cart_id": {{cart_id}},
-  "track_id": {{track_id}},
-  "pcs": 2
-}
-
-### 8.3 Admin lists all carts (expected: 200)
-GET {{host}}/api/carts
+### get cart by id (admin)
+GET {{host}}/api/carts/{{cart_id}}
 Accept: application/json
 Authorization: Bearer {{admin_token}}
 
-### 8.4 Customer tries to list all carts (expected: 403)
-GET {{host}}/api/carts
+### delete cart (admin)
+DELETE {{host}}/api/carts/{{cart_id}}
 Accept: application/json
-Authorization: Bearer {{customer_token}}
+Authorization: Bearer {{admin_token}}
 
-### 8.5 Customer creates own cart (expected: 201)
-# @name create_cart_customer
+### post my-carts (customer)
+# @name create_my_cart
 POST {{host}}/api/my-carts
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{customer_token}}
 
 {
-  "date": "2026-03-05"
+  "date": "2026-05-06"
 }
 
-@my_cart_id = {{create_cart_customer.response.body.data.id}}
+###
+@my_cart_id = {{create_my_cart.response.body.data.id}}
 
-### 8.6 Customer lists own carts (expected: 200)
+### get my-carts (customer)
 GET {{host}}/api/my-carts
 Accept: application/json
 Authorization: Bearer {{customer_token}}
 
-### 8.7 Customer adds own cart item (expected: 201)
-# @name create_my_item
+### delete my-carts/{id} (customer)
+DELETE {{host}}/api/my-carts/{{my_cart_id}}
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+
+// -------------------------------
+// CART ITEMS (admin + self)
+// -------------------------------
+
+### post my-carts (customer) - checkout flowhoz
+# @name create_my_cart_for_items
+POST {{host}}/api/my-carts
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "date": "2026-05-06"
+}
+
+###
+@my_cart_for_items_id = {{create_my_cart_for_items.response.body.data.id}}
+
+### post my-cart-item (customer)
+# @name create_my_cart_item
 POST {{host}}/api/my-cart-items
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{customer_token}}
 
 {
-  "cart_id": {{my_cart_id}},
-  "track_id": {{track_id}},
+  "cart_id": {{my_cart_for_items_id}},
+  "track_id": 1,
   "pcs": 1
 }
 
-@my_item_id = {{create_my_item.response.body.data.id}}
+###
+@my_cart_item_id = {{create_my_cart_item.response.body.data.id}}
 
-### 8.8 Customer updates own cart item (expected: 200)
-PATCH {{host}}/api/my-cart-items/{{my_item_id}}
+### get my-cart-items (customer)
+GET {{host}}/api/my-cart-items
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### patch my-cart-item (customer)
+PATCH {{host}}/api/my-cart-items/{{my_cart_item_id}}
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer {{customer_token}}
 
 {
-  "pcs": 3
+  "pcs": 2
 }
 
-### 8.9 Customer deletes own cart item (expected: 200)
-DELETE {{host}}/api/my-cart-items/{{my_item_id}}
+### delete my-cart-item (customer)
+DELETE {{host}}/api/my-cart-items/{{my_cart_item_id}}
 Accept: application/json
 Authorization: Bearer {{customer_token}}
 
-### ---------------------------------------------------------
-### 9) Logout
-### ---------------------------------------------------------
+### admin post cart-item
+# @name create_cart_item_admin
+POST {{host}}/api/cart-items
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
 
-### 9.1 Logout admin
+{
+  "cart_id": {{my_cart_for_items_id}},
+  "track_id": 1,
+  "pcs": 1
+}
+
+###
+@cart_item_admin_id = {{create_cart_item_admin.response.body.data.id}}
+
+### get cart-items (admin)
+GET {{host}}/api/cart-items
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### get cart-item by id (admin)
+GET {{host}}/api/cart-items/{{cart_item_admin_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+### patch cart-item (admin)
+PATCH {{host}}/api/cart-items/{{cart_item_admin_id}}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "pcs": 3
+}
+
+### delete cart-item (admin)
+DELETE {{host}}/api/cart-items/{{cart_item_admin_id}}
+Accept: application/json
+Authorization: Bearer {{admin_token}}
+
+
+// -------------------------------
+// CHECKOUT + DOWNLOAD
+// -------------------------------
+
+### post my-carts (customer) - checkouthoz
+# @name create_checkout_cart
+POST {{host}}/api/my-carts
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "date": "2026-05-06"
+}
+
+###
+@checkout_cart_id = {{create_checkout_cart.response.body.data.id}}
+
+### add item checkout cart-hoz
+POST {{host}}/api/my-cart-items
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{customer_token}}
+
+{
+  "cart_id": {{checkout_cart_id}},
+  "track_id": 1,
+  "pcs": 1
+}
+
+### checkout (customer) - signed linkeket ad vissza
+# @name checkout
+POST {{host}}/api/my-carts/{{checkout_cart_id}}/checkout
+Accept: application/json
+Authorization: Bearer {{customer_token}}
+
+### elsõ signed download link meghívása (ha van)
+GET {{checkout.response.body.data.download_items[0].url}}
+Accept: application/json
+
+
+// -------------------------------
+// LOGOUT
+// -------------------------------
+
+### logout admin
 POST {{host}}/api/users/logout
 Accept: application/json
 Authorization: Bearer {{admin_token}}
 
-### 9.2 Logout customer
+### logout customer
 POST {{host}}/api/users/logout
 Accept: application/json
 Authorization: Bearer {{customer_token}}

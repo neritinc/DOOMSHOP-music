@@ -7,18 +7,24 @@ A DOOMSHOP-music egy Laravel + Vue alapú zenei webshop rendszer. A felhasznál�
 
 ### Képernyőképekkel, hogy működik a program
 - Főoldal: `client/src/views/HomeView.vue`
+![Valami kép](Kepek/home.png)  
 - Bejelentkezés: `client/src/views/LoginView.vue`
+![Valami kép](Kepek/login.png.png)
 - Regisztráció: `client/src/views/RegistrationView.vue`
+![Valami kép](Kepek/register.png)
 - Track lista: `client/src/views/TracksView.vue`
+![Valami kép](Kepek/tracks.png)
 - Track részletek: `client/src/views/TrackDetailView.vue`
+![Valami kép](Kepek/trackdetails.png)
 - Kosár: `client/src/views/MyCartView.vue`
+![Valami kép](Kepek/cart.png)
+- Műfajok: `client/src/views/GenresView.vue`
+![Valami kép](Kepek/genres.png)
+- Előadók: `client/src/views/ArtistsView.vue`
+![Valami kép](Kepek/artists.png)
+- Albumok: `client/src/views/AlbumsView.vue`
+![Valami kép](Kepek/albums.png)
 
-Képernyőkép javasolt lista (dokumentáláshoz):
-1. Login oldal és sikeres belépés
-2. Track lista és lapozás
-3. Track részlet + preview lejátszás
-4. Kosár és checkout folyamat
-5. Admin nézet (users/tracks/genres/artists/albums)
 
 ## Komponenseinek technikai leírása
 
